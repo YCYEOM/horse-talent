@@ -1,14 +1,66 @@
+# 주제 → 컨셉 → 결정 → 요구 → 장면 → 검사 → 증거.
+#
+# **자리표시자였다.** THEME-001 → … → EVD-001 이 한 줄로 이어져 있었지만
+# 어느 것도 실제 파일을 안 가리켰다 — 사슬은 통과하는데 아무것도 안 말했다(HT-008).
+# 이제 각 항목에 `where` 가 붙는다. 파일이 없어지면 사람이 알아챌 수 있다.
+#
+# 사슬을 하나로 안 두고 **셋으로 나눴다.** 이 게임의 주장이 셋이기 때문이다 —
+#   A. 정보 비대칭이 이득의 유일한 원천이다
+#   B. 경주는 시작 전에 정해져 있지 않다
+#   C. 후반이 초반의 반복이 아니다
+
 themes: [THEME-001]
 concepts: [CON-001]
-decisions: [DEC-001]
-requirements: [REQ-001]
-scenarios: [SCN-001]
-tests: [TEST-001]
-evidence: [EVD-001]
+decisions: [DEC-A, DEC-B, DEC-C]
+requirements: [REQ-A, REQ-B, REQ-C]
+scenarios: [SCN-A, SCN-B, SCN-C]
+tests: [TEST-A, TEST-B, TEST-C]
+evidence: [EVD-BUILD, EVD-MEASURE, EVD-SCREENS]
+
+where:
+  THEME-001: "docs/GAME_SPEC.md — 내 말을 강화하고, 그 결과는 나만 알고, 그 차이로 마권을 산다"
+  CON-001: "nan/concepts/CON-001.yaml (approvedBy: yeomyooncheol · 2차 승인 포함)"
+
+  DEC-A: "docs/DECISIONS.md — 관중은 내 말의 지난 성적만 본다. 강화 결과는 사적 정보다"
+  REQ-A: "src/systems/race.ts `publicPower` — 내 말이면 prevForm, 남의 말이면 실제 실력"
+  SCN-A: "창구 — 평판 카드에 `관중이 보는 내 말 5.0 / 실제 7` 이 뜬다 (src/scenes/game.ts drawWindow)"
+  TEST-A: "src/balance.test.ts — 숨기면 모든 승식에서 수익률이 오른다 · 공개 정보만으로는 어느 승식도 +EV 가 아니다"
+
+  DEC-B: "docs/DECISIONS.md — 확률이 정하고 능력치가 민다. CONDITION ±42% + JITTER ±40%"
+  REQ-B: "src/systems/race.ts `runRace` — 경주당 말당 컨디션 1회 + 구간마다 주행량 비례 흔들림"
+  SCN-B: "트랙 — 같은 출주표라도 시드가 다르면 우승마가 갈린다 (src/scenes/game.ts drawTrack)"
+  TEST-B: "src/balance.test.ts — 인기마 승률 25~45% · 2~5위도 실제로 이긴다 · 스탯 5종이 전부 결과를 움직인다"
+
+  DEC-C: "docs/DECISIONS.md — 국면마다 최선의 수가 속한 범주가 다르다 (역베팅 / 내 말 레버리지 / 상금)"
+  REQ-C: "src/systems/session.ts — 상금 곡선(PURSE_GROW) + 대상경주 3배가 후반 판단을 바꾼다"
+  SCN-C: "마방 — 대상경주 거리를 판 내내 헤더에 띄워 초반이 준비 구간이 된다"
+  TEST-C: "src/curve.test.ts — 국면 3종의 최선의 수가 서로 다른 범주다"
+
+  EVD-BUILD: "evidence/REPORT.md — 커밋·빌드 해시·단계별 통과. `npm run evidence` 가 만든다"
+  EVD-MEASURE: "evidence/measurements.md — 문서 수치를 지금 코드로 다시 낸 것. 어긋나면 ⚠"
+  EVD-SCREENS: "evidence/screens/ — 페이즈 6장. 크롬이 없으면 NOT-CAPTURED.md"
+
 links:
   - { from: THEME-001, to: CON-001 }
-  - { from: CON-001, to: DEC-001 }
-  - { from: DEC-001, to: REQ-001 }
-  - { from: REQ-001, to: SCN-001 }
-  - { from: SCN-001, to: TEST-001 }
-  - { from: TEST-001, to: EVD-001 }
+
+  - { from: CON-001, to: DEC-A }
+  - { from: DEC-A, to: REQ-A }
+  - { from: REQ-A, to: SCN-A }
+  - { from: SCN-A, to: TEST-A }
+  - { from: TEST-A, to: EVD-MEASURE }
+
+  - { from: CON-001, to: DEC-B }
+  - { from: DEC-B, to: REQ-B }
+  - { from: REQ-B, to: SCN-B }
+  - { from: SCN-B, to: TEST-B }
+  - { from: TEST-B, to: EVD-MEASURE }
+
+  - { from: CON-001, to: DEC-C }
+  - { from: DEC-C, to: REQ-C }
+  - { from: REQ-C, to: SCN-C }
+  - { from: SCN-C, to: TEST-C }
+  - { from: TEST-C, to: EVD-SCREENS }
+
+  - { from: TEST-A, to: EVD-BUILD }
+  - { from: TEST-B, to: EVD-BUILD }
+  - { from: TEST-C, to: EVD-BUILD }

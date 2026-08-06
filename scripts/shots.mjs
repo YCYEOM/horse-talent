@@ -1,0 +1,55 @@
+// 페이즈별 화면을 찍는다. **크롬이 없으면 건너뛰되 그렇게 적는다** — 조용히 빠지면
+// "화면 증거가 있다"고 읽힌다.
+//
+// 캔버스 게임은 헤드리스로 화면을 볼 수가 없어서 배치 겹침을 매번 사람이 먼저
+// 발견했다(HT-007 에서 9건). `?go=` / `?t=` 개발 진입이 그걸 막으려고 있는 것이다.
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const OUT = "evidence/screens";
+const PORT = 4271;
+// `t` 는 경주 시각 고정. `--virtual-time-budget` 이 시계를 빨리 감아서
+// 안 주면 트랙이 매번 정산 화면으로 넘어가 버린다.
+const SHOTS = [
+  { name: "1-name", q: "" },
+  { name: "2-stable", q: "?go=stable" },
+  { name: "3-window", q: "?go=window" },
+  { name: "4-track", q: "?go=track&t=3.0" },
+  { name: "5-track-finish", q: "?go=track&t=6.5" },
+  { name: "6-settle", q: "?go=settle" },
+];
+
+mkdirSync(OUT, { recursive: true });
+if (!existsSync(CHROME)) {
+  writeFileSync(`${OUT}/NOT-CAPTURED.md`,
+    `# 화면 증거 없음\n\n헤드리스 크롬을 못 찾았다: \`${CHROME}\`\n\n` +
+    "`npm run dev` 로 띄우고 직접 보거나, 크롬을 설치하고 `npm run evidence` 를 다시 돌린다.\n");
+  console.log("[shots] 크롬 없음 — 건너뛰고 evidence/screens/NOT-CAPTURED.md 에 적었다");
+  process.exit(0);
+}
+
+// 개발 서버는 `?go=` 를 위해 필요하다 — 프로덕션 빌드에서는 그 진입이 빠진다
+const dev = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { stdio: "ignore" });
+const stop = () => { try { dev.kill(); } catch {} };
+process.on("exit", stop);
+
+const wait = async () => {
+  for (let i = 0; i < 60; i++) {
+    try { await fetch(`http://localhost:${PORT}/`); return true; } catch {}
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return false;
+};
+
+if (!(await wait())) { stop(); throw new Error("개발 서버가 안 떴다"); }
+
+for (const s of SHOTS) {
+  execFileSync(CHROME, [
+    "--headless", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
+    "--window-size=1000,700", `--screenshot=${OUT}/${s.name}.png`,
+    "--virtual-time-budget=3000", `http://localhost:${PORT}/${s.q}`,
+  ], { stdio: "ignore" });
+  console.log(`[shots] ${s.name}.png`);
+}
+stop();

@@ -1,0 +1,132 @@
+{
+  "task_id": "HT-007",
+  "summary_of_changes": "**M4 동결.** `freeze.test.ts` 가 시스템 2 · 승식 7 · 스탯 5 · 페이즈 6 을 못 박는다. 미해결 14건을 **고친다 / 받아들인다 / 사람이 판정한다** 셋으로 갈랐다. 근성 기전 버그 3건 수정(효과 0.09→0.7 · 경합폭 0.06→0.30). 최약체 함정을 배당표 **예상 승률**로 드러냈다. 파산을 화면에서 이야기로 바꿨다(규칙 불변). 사용자 판정으로 **경주 12회 고정**, `honest-length` 를 실측 10분으로 닫았다. **UI 겹침 9건** 수정과 **말 다시 그리기**.",
+  "why": "동결은 '더 안 만든다'는 약속이 아니라 **남은 것을 어떻게 처리할지 정하는 일**이다. 미해결을 셋으로 안 가르면 '나중에'가 '영영'이 된다. 그리고 검사가 좌표만 보고 화면은 아무도 안 봐서, 겹침을 **매번 사람이 먼저 발견했다** — 그 구조 자체를 고쳐야 했다.",
+  "files_changed": [
+    "src/freeze.test.ts (신규 15개 — 동결 개수 · 파산 회복이 구조적으로 참인지)",
+    "src/systems/race.ts (근성 3버그 · GRIT_EFFECT 0.7 · GRIT_BAND 0.30 · winProb · 승식 예시 문구 폭)",
+    "src/systems/session.ts (RACES_MIN/MAX 12 고정 · recoveryPrize · canRecoverHere · progressLabel)",
+    "src/ui/horse.ts (목·머리·갈기·몸통 다시 그림 · HORSE_BOX 내보냄)",
+    "src/ui/tokens.ts (그대로 — 스프라이트용 hsl/SPRITE_BASE 는 되돌리며 제거)",
+    "src/scenes/game.ts (L 좌표 12개 · 헤더 measureText 순서 · 트랙 이름 위치 · 파산 화면)",
+    "src/kits/layout.ts (textWidth — 가로 폭 근사)",
+    "src/main.ts (개발 전용 ?go= / ?t= — 빌드에서 빠진다)",
+    "src/layout.test.ts · balance.test.ts · session.test.ts (검사 143 → 148)",
+    "nan/gates.yaml (M4 기록 · honest-length 닫음 · M4 를 한 번 연 기록)",
+    "docs/GAME_SPEC.md · docs/DECISIONS.md · nan/concepts/CON-001.yaml"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (148개 / 7파일)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "freeze.test — 시스템 2 · 승식 7 · 스탯 5 · 페이즈 6 · 경주 12",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "근성 경합폭 스윕 (bash/sed 루프, 소스 복원 확인)",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "파산 실측 1,200판 — 경험 8% · 회복 11% · 파산 시점 중앙 9R/10R",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "12R 고정 후 경제 재측정 1,200판 — 파산 11% · 참여율 95% · 최종 골드 ×0.24",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "스탯 5종 효과 실측 1,200판 — 속력 +26.0%p … 안정 −1.8%p(3착 +4.4%p)",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "배치 검사 — 옛 좌표에서 실제로 깨지는지 5건 확인",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "헤드리스 크롬 스크린샷 — 5개 페이즈 육안 확인",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / design check / protect verify / trace validate",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 판정 7문항 — 5개 회신, 4번·7번 미답",
+        "level": 3,
+        "status": "skipped"
+      }
+    ],
+    "not_verified": [
+      "**사람 판정 4번(유리 카드 대비가 충분한가)** — 답을 못 받았다. M5 로 넘긴다.",
+      "**사람 판정 7번(받아들이기로 한 넷에 동의하는가)** — 설명은 드렸고 명시적 동의는 못 받았다. M5 로 넘긴다.",
+      "12R 고정 이후의 **한 판 실제 분 수**. 실측 10분은 고정 이전 값이고, 랜덤 구간 중앙이 10경주였으므로 12분 안팎으로 **추정**했다. 숫자는 SPEC 에 안 적었다."
+    ]
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "**12R 고정으로 몰빵 방어가 사라졌다.** 8~12 랜덤이었던 이유가 '마지막 경주에 전 재산'을 막는 것이었다. 12R 이 대상경주(3배)인 것을 아니까 아껴뒀다 몰아넣는 것이 정답에 가까워진다. 남은 제동은 패리뮤추얼(크게 걸면 내 배당이 내려간다)뿐이다. **사용자가 실제 플레이 뒤 택했다.**",
+    "**안정 스탯은 승률을 안 올린다**(−1.8%p). 설계대로지만(요행 우승도 같이 깎인다) 화면에는 '컨디션 기복이 줄어든다'만 적혀 있어서 **플레이어가 손해로 오해할 수 있다.**",
+    "배치 검사는 **내가 목록에 넣은 것만** 본다. 이번에 세 번 놓쳤다 — 세로만 보고 가로를 안 봤고, 글자만 보고 그림을 안 봤고, 카드만 보고 그 밑 머리글을 안 봤다. **매번 사람이 화면에서 먼저 찾았다.**",
+    "파산한 89% 가 회복 못 하는 이유는 회복이 어려워서가 아니라 **남은 경주가 없어서**다(파산 시점 중앙 9R/12R)."
+  ],
+  "out_of_scope_findings": [
+    "트랙만 CC0 픽셀 스프라이트로 바꿔봤다가 **사용자 판정으로 되돌렸다**(코드·그림·CREDITS 삭제). 갤럽 프레임은 확실히 나았지만 같은 말이 화면마다 다르게 생기는 값이 컸다. 되살리려면 커밋 `9db4f41` 에 그대로 있다.",
+    "**캔버스 게임은 헤드리스로 화면을 볼 수가 없다.** 이것이 겹침을 반복해서 놓친 진짜 원인이었다. 개발 전용 `?go=<phase>` 와 `?t=<초>` 를 넣어 `chrome --headless --screenshot` 으로 페이즈별로 찍는다. **이번 겹침 9건 중 넷은 좌표 계산으로는 안 잡히는 것이었다.**"
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md",
+      "nan/gates.yaml",
+      "nan/concepts/CON-001.yaml",
+      "tasks/HT-007.md"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**효과를 크게 올려도 결과가 안 변하면 기전이 안 도는 것이다.** 근성을 5배 올려도 승률이 그대로라 파봤더니 버그가 셋이었다 — 선두가 자기 자신을 포함해 근성을 받았고, 같은 forEach 안에서 배열을 갈아서 게이트 순서에 결과가 달렸고, 경합폭 6% 가 누적거리로 반 구간도 안 됐다. **HT-006 의 근성 검사는 '3보다 10이 크다'만 봐서 이 셋을 다 통과시켰다.**",
+      "**배치 검사는 축을 하나라도 빼면 그 축으로만 깨진다.** 세로만 재다가 가로 넘침 셋, 글자만 재다가 그림 겹침 둘, 카드만 재다가 머리글 겹침 하나를 놓쳤다. 검사 목록에 없는 것은 존재하지 않는 것과 같다.",
+      "**폭·높이를 코드와 검사가 각자 적으면 반드시 어긋난다.** 설명 카드를 코드는 74px 로 그리는데 검사는 42px 로 모델링해서 마권을 16px 덮는 것을 놓쳤다. `L.poolDescH` · `HORSE_BOX` · `EXAMPLE_ORDER` 로 하나에서 읽게 했다.",
+      "**`measureText` 는 현재 폰트로 잰다.** 폰트를 바꾼 뒤에 이름 폭을 재서 헤더에서 `번개블레이즈1800m` 처럼 붙었다.",
+      "**규칙을 고정하면 그 랜덤이 막고 있던 것이 풀린다.** 경주 수를 12로 고정하자 '마지막에 전 재산' 방어가 같이 사라졌다. 사용자 지시라 그대로 갔지만 **무엇을 잃는지는 코드와 문서에 적었다.**",
+      "**동결은 문서가 아니라 검사여야 한다.** `freeze.test.ts` 가 깨지면 '실수로 늘렸거나 마일스톤을 열어야 하거나' 둘 중 하나다. 검사를 고치는 것이 먼저가 아니다."
+    ]
+  },
+  "rollback": {
+    "method": "`freeze.test.ts` 를 지우고 `nan/gates.yaml` 의 M4 기록을 되돌린다. 근성 값을 0.09/0.06 으로, `RACES_MIN` 을 8 로, `L` 좌표 12개와 `horse.ts` 를 이전으로. **규칙은 근성 값과 경주 수 말고는 안 건드렸다.**"
+  },
+  "design": {
+    "rendered_verification": true
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "notes": "정리하고 m4진행해줘 → 권하는 방식으로 진행해줘 → (판정 5개 회신) → 이제 된거같아 → 이제 m5로 넘어가줘. **4번·7번은 답을 못 받았고 M5 로 넘긴다.**",
+    "at": "2026-08-06T16:36:33.000Z"
+  }
+}

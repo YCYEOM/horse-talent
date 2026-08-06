@@ -1,3 +1,218 @@
-entries: []
-# Each entry: timestamp, agent, prompt_or_goal, suggestion, human_change, human_approval,
-# files, tests, playtest, commit, build, and licenses.
+# AI 사용 기록 — **생성물이다. 직접 고치지 마라.**
+#
+# `node scripts/ai-use-log.mjs` 가 `records/HT-*.json` 에서 만든다.
+# 손으로 쓰면 다음 작업에서 안 따라오고, 제출 문서가 조용히 거짓이 된다.
+# 내용을 바꾸려면 run record 를 고치고 다시 돌려라.
+#
+# 모든 코드는 AI 에이전트가 작성했고 사람이 작업 단위로 승인했다.
+# 승인 문구는 각 항목의 human_change 에 원문 그대로 있다.
+
+generated_from: records/
+entries:
+  - task: "HT-001"
+    timestamp: "2026-08-06T12:30:49.907Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "CON-001 이 승인됐지만 코드가 0 이었다. 이 조각이 답해야 하는 질문은 하나였다 — **강화하고 배당을 보고 거는 것이 재미있는가.** 컨셉의 최대 위험은 밸런스가 아니라 '두 게임이 안 물리는 것'이었고, 그것을 '강화 결과는 나만 안다'로 풀었는데 그 연결이 손에 잡히는지는 플레이해야 안다."
+    suggestion: "M1 세로 조각. 신규 `src/systems/stable.ts`(3스탯 × 10단계 · 강화 3갈래 확률표 · 절차 생성 이름), `src/systems/race.ts`(6두 구간 시뮬 · 거리별 스탯 가중치 · 패리뮤추얼 배당 · 승식 2종 정산), `src/ui/tokens.ts`·`src/ui/horse.ts`(치비 말 렌더), `src/scenes/game.ts`(마방→창구→트랙→정산 4페이즈, 960×640), 검사 3파일. `kits/rng`·`kits/layout` 은 nan 에서 가져왔다."
+    human_change: "플레이 확인 후 승인"
+    human_approval: true
+    files:
+      - "src/systems/stable.ts (신규)"
+      - "src/systems/race.ts (신규)"
+      - "src/ui/tokens.ts (신규)"
+      - "src/ui/horse.ts (신규)"
+      - "src/scenes/game.ts (신규)"
+      - "src/main.ts (교체)"
+      - "src/kits/rng.ts · layout.ts (nan 에서 이식)"
+      - "src/stable.test.ts · race.test.ts · layout.test.ts · balance.test.ts (신규)"
+      - "index.html · DESIGN.md · docs/GAME_SPEC.md · docs/DECISIONS.md"
+    tests:
+      - "npm test (56개)"
+      - "강화 확률표 불변식 — 행 합 100 · 감소 단조 증가 · 보존 항상 > 0"
+      - "실제 분포가 표와 맞는다 (4000회)"
+      - "패리뮤추얼 항등식 — 지급 총액 = 총 판돈 × (1−공제율)"
+      - "거리별 가중치가 착순을 바꾼다 (단거리형 40판 × 2거리)"
+      - "밸런스 분포 측정 (인기마 승률 · EV) — 3000판"
+      - "npm run build / design check / protect verify / trace validate"
+    not_verified: []
+    known_limitations:
+      - "⚠ **처음 구현은 경주가 시작 전에 정해져 있었다** — 인기마 승률 84% · 최약체 0% · 3착 이내 99.6%. 잡음이 총 주행량의 3% 뿐이었다. 플레이 지적으로 발견해 컨디션(±42%)과 비례 잡음(±40%)으로 고쳤다(34/25/20/13/9/0%)."
+      - "⚠ **단승 인기마 수익률이 +54% 인 돈 찍는 기계였다** — 관중이 판돈을 실력에 비례해서 걸었는데 승률은 실력에 초비례한다. 관중이 실력을 승률로 옮기게 고쳤다."
+      - "**최약체(능력치 6위) 승률이 0% 다.** 그 마권은 순수 함정이다 — 미해결."
+      - "한 판 길이가 아직 추정이다(`projectGates.honest-length` 미충족). M2 에서 실측한다."
+      - "강화 확률표 27개 값 · 공제율 20% · 시작 골드 1000 · 강화 비용은 전부 근거 없다."
+  - task: "HT-002"
+    timestamp: "2026-08-06T12:30:50.412Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "M1 은 CON-001 이 못 박은 대로 2종만 넣었다. '승식이 곧 국면'이라는 컨셉의 곡선이 코드에 없었고, 사용자가 승식 확장과 뜻 설명을 요청했다."
+    suggestion: "승식 2종 → **7종**(연승·단승·복승·쌍승·복연승·삼복승·삼쌍승). 배당 모델을 `CROWD_EXPONENT` 땜질에서 **몬테카를로 + Harville** 로 다시 썼다 — 관중이 `publicPower` 로 경주를 400판 상상해 승률을 얻고, 거기서 1·2·3착 순열 확률을 만들어 **순열 하나에서 7종을 전부 유도**한다. `Bet.gate` 가 `gates: number[]` 가 되고 순서 승식은 누른 순서가 착순이다. 승식 설명 3겹(항상 보이는 한 줄 · 호버 미리보기 · `?` 오버레이)."
+    human_change: "플레이 확인 후 승인"
+    human_approval: true
+    files:
+      - "src/systems/race.ts (Pool 7종 · selKey · isHit · crowdWinProbs · trifectaProbs · selectionProbs · winningKeys)"
+      - "src/scenes/game.ts (승식 그리드 · 순서 선택 · 설명 3겹)"
+      - "src/race.test.ts · balance.test.ts · layout.test.ts"
+      - "docs/GAME_SPEC.md · docs/DECISIONS.md"
+    tests:
+      - "npm test (74개)"
+      - "적중 판정 7종 — 착순 4-2-6 기준"
+      - "각 승식의 확률 합 = slots (순열에서 유도됐다는 증거)"
+      - "패리뮤추얼 항등식 — 7종 전부"
+      - "공개 정보 EV — 7종 전부 음수 (−12~−67%)"
+      - "숨긴 정보 우위 — 7종 전부에서 공개보다 낫다"
+      - "npm run build / design check / protect verify / trace validate"
+    not_verified: []
+    known_limitations:
+      - "⚠ **조합 승식에서 숨긴 정보의 우위가 희석된다.** 5R 스탯 8 을 관중이 4.8 로 볼 때 단승 +275% 인데 삼복승 −6% · 삼쌍승 −12% 다. 내 말 말고 다른 말들의 착순도 맞혀야 하는데 거기엔 정보 우위가 없다. **CON-001 의 '후반엔 삼쌍승으로 크게 번다'가 실측으로 안 받쳐진다** — M3 숙제."
+      - "Harville 은 근사다. 인기마의 조합 확률을 조금 과대평가한다(다만 favorite-longshot bias 와 같은 방향이라 현실적이다)."
+      - "승식별 공제율이 20% 로 통일돼 있다. 실제 경마는 다르다."
+      - "한 경주에 마권 한 장만 산다. 박스 베팅 없음."
+  - task: "HT-003"
+    timestamp: "2026-08-06T12:30:50.925Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "플레이 지적 셋과 그 과정에서 발견한 버그 하나. 특히 (1) 은 승식 7종 중 넷이 3착까지 보는데 화면이 1착에서 끊긴 **기능 결함**이었고, (4) 는 1.65초 연출을 통째로 무의미하게 만들고 있었다."
+    suggestion: "네 가지 — (1) 경주가 연장 구간까지 돌아 **3착까지 들어오는 것을 보여준다**(`Result.finish`, 착순 배지, 관중 시뮬 `quick` 모드). (2) **도움말 버튼·오버레이 삭제**, 설명 카드에 예시 흡수. (3) **아트 2차** — 나무 패널 → 유리 카드 + 주 동작 그라데이션(`card()`·`accentGrad()`). (4) **강화 결과 누출 수정**(`revealLevel`·`shownLv`·`REVEAL`)."
+    human_change: "플레이 확인 후 승인"
+    human_approval: true
+    files:
+      - "src/systems/race.ts (EXTRA · finish · quick)"
+      - "src/scenes/game.ts (트랙 3착 · 설명 카드 · 유리 카드 UI · revealLevel)"
+      - "src/ui/tokens.ts (토큰 전면 교체 · card · accentGrad)"
+      - "src/ui/horse.ts (C.hoof)"
+      - "src/main.ts"
+      - "src/race.test.ts · layout.test.ts"
+      - "DESIGN.md · docs/GAME_SPEC.md · docs/DECISIONS.md"
+    tests:
+      - "npm test (82개)"
+      - "결승선 4종 — 1착이 정확히 선에서 끊는다 · 착순대로 늦어진다 · 3착까지 연장 안에 든다"
+      - "판정 누출 4종 — 판정 전 옛 단계 · 판정 후 실제 단계 · REVEAL 이 바늘과 같은 시각"
+      - "배치 검사 — 창구 겹침 3건을 잡아 좌표 재조정"
+      - "design check — 토큰 밖 하드코딩 hex 없음"
+      - "npm run build / protect verify / trace validate"
+    not_verified: []
+    known_limitations:
+      - "**아트 방향은 기계가 판정할 수 없다.** media.io 계열이 사용자가 말한 '현대식'과 같은지는 사람이 봐야 안다."
+      - "3착 뒤 0.8초가 적당한지 실측 없다."
+      - "유리 카드 대비(면 4~7%)가 모든 화면에서 충분한지 확인 안 됐다."
+      - "호버는 포인터 기기 전용이다. 터치에서는 설명 미리보기가 없다."
+  - task: "HT-004"
+    timestamp: "2026-08-06T12:55:55.092Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "`nan/gates.yaml` 의 M2 는 '한 판이 끝까지 간다 · 10~20분이 실측으로 확인된다' 이다. 2경주로는 경제가 도는지 알 수 없었고, `projectGates.honest-length` 가 다섯 게이트 중 유일한 미충족 항목이었다."
+    suggestion: "M2 — 경주 2회 고정에서 **8~12회 랜덤**으로. 신규 `src/systems/session.ts`(경주 수 · 상금 · 파산 · Tally)와 `src/session.test.ts`(한 판 전체 시뮬 300판). **상금을 신설했다** — 측정에서 이게 없으면 게임이 성립하지 않는다는 것이 드러났다. 결산을 12경주용으로(최고 배당 한 건 강조 + 요약 5줄), 파산 처리, 진행 표시를 범위로."
+    human_change: "플레이 확인 — 한 판 길이 적당"
+    human_approval: true
+    files:
+      - "src/systems/session.ts (신규 — 경주 수 · 상금 · 파산 · Tally)"
+      - "src/session.test.ts (신규 — 한 판 전체 시뮬 18개)"
+      - "src/scenes/game.ts (8~12경주 · 상금 정산 · 파산 · 결산 확장)"
+      - "src/layout.test.ts (M1 규모 → M2 규모)"
+      - "nan/gates.yaml (honest-length 상태 기록)"
+      - "docs/GAME_SPEC.md · docs/DECISIONS.md"
+    tests:
+      - "npm test (100개)"
+      - "정책 4종 × 12경주 × 400판 — 수입원 부재 발견"
+      - "상금 규모 6종 스윕 — 실측으로 값 유도"
+      - "한 판 시뮬 300판 — 참여율 98% · 파산 12% · 강화 8회"
+      - "경주 수 8~12 범위 · 판마다 다름"
+      - "상금 배분 · 후반 증가 · 4착 제외"
+      - "npm run build / design check / protect verify / trace validate"
+      - "사람 플레이 — 한 판 완주, 길이 '적당하다' 판정"
+    not_verified: []
+    known_limitations:
+      - "⚠ **상금은 CON-001 에 없던 메커니즘이다.** 컨셉은 '순위를 맞히면 골드'만 적었고 수입원을 정하지 않았다. 게임이 성립하지 않아 넣었고 사용자에게 명시적으로 알렸으나, **승인된 컨셉 문서는 아직 이 사실을 반영하지 않았다.**"
+      - "**`honest-length` 를 절반만 닫았다.** 사람이 실제로 완주하고 '적당하다'고 판정했으므로 fail_if 는 해소됐지만 **초 단위 숫자는 없다.** GAME_SPEC 에 분 단위 값을 적지 않았다."
+      - "시뮬의 플레이 모형은 하나뿐이다. 사람이 이보다 잘하면 골드가 더 늘고 못하면 덜 는다 — 실제 분포는 더 넓을 것이다."
+      - "파산 후 남은 경주를 구경하는 것이 견딜 만한지 확인 안 됐다."
+      - "상금 값(3600 + 경주×420)은 한 플레이 모형 기준이다."
+  - task: "HT-005"
+    timestamp: "2026-08-06T14:04:09.341Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "`projectGates.curve-not-repetition` 은 셋업 때 스스로 지목한 1번 위험이다. 첫 측정에서 중반·후반 최선의 수가 둘 다 '단승'이라 게이트에 걸리는 줄 알았다."
+    suggestion: "M3 — 곡선 판정. `src/curve.test.ts` 신규(24개). **값은 하나도 안 만졌다** — 곡선이 없는 게 아니라 안 재본 수가 둘 있었다(역베팅 · 후반 상금 배분). 화면에 **평판 대비 실력**과 이번 경주 상금을 띄우고, CON-001 의 틀린 두 문장을 고쳐 재승인받았다."
+    human_change: "정리하고 m4 진행해줘"
+    human_approval: true
+    files:
+      - "src/curve.test.ts (신규 24개)"
+      - "src/scenes/game.ts (평판 카드 · 상금 표시 · 수입 구성)"
+      - "src/layout.test.ts"
+      - "nan/concepts/CON-001.yaml (반박 절 + 2차 승인)"
+      - "nan/gates.yaml (curve 판정 기록)"
+      - "docs/GAME_SPEC.md · docs/DECISIONS.md"
+    tests:
+      - "npm test (118개)"
+      - "역베팅 EV — 관중 과대평가 시 인기마 +45%"
+      - "후반 스탯 배분 — 같은 총합 27 이 382~3,939 G"
+      - "국면 3종 최선의 수가 다른 범주"
+      - "npm run build / design check / protect / trace"
+    not_verified: []
+    known_limitations:
+      - "⚠ **조합 승식 정보 우위 희석은 여전히 미해결.** 삼복승 −6% · 삼쌍승 −12%. CON-001 의 '후반엔 삼쌍승'을 문서에서 고쳤을 뿐 설계로 풀지는 않았다."
+      - "평판 대비 실력을 숫자로 띄우는 것이 **답을 알려주는 것인지** 확인 안 됐다."
+      - "초반이 순손실 구간인 것은 HT-006(대상경주)이 완화했지만 실측 재확인 안 함."
+  - task: "HT-006"
+    timestamp: "2026-08-06T14:04:11.299Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "M3 가 구멍 셋을 드러냈다(초반이 죽었다 · 후반 판단이 하나 · 특화가 도박이다). 대상경주의 **거리 사전 공개**가 셋을 한 번에 막는다. 그리고 기존 스탯 셋은 전부 '어느 거리에 강한가' 한 축이라 넷째를 또 거리 스탯으로 넣으면 판단이 안 는다."
+    suggestion: "**대상경주(G1)** — 마지막 1회 · 상금 3배 · **거리 사전 공개**. **능력치 3 → 5종** — 근성(경합 축) · 안정(기복 축). 연쇄로 상대 성장률 0.45 → 0.32, 착순을 통과 시각으로, 강화 연출을 가운데 오버레이로."
+    human_change: "정리하고 m4 진행해줘"
+    human_approval: true
+    files:
+      - "src/systems/stable.ts (STATS 5종 · DISTANCE_STATS · STAT_HINT)"
+      - "src/systems/race.ts (근성·안정 · RIVAL_GROWTH 0.32 · 착순=통과시각 · 거리 강제)"
+      - "src/systems/session.ts (featureRace · FEATURE_MULT · featurePrize)"
+      - "src/scenes/game.ts (5행 · 헤더 목표 · 오버레이 연출)"
+      - "src/curve.test.ts · session.test.ts · balance.test.ts · layout.test.ts"
+      - "docs/GAME_SPEC.md · docs/DECISIONS.md · nan/concepts/CON-001.yaml"
+    tests:
+      - "npm test (124개)"
+      - "근성 3종 — 올리면 승률 ↑ · 압도적이면 값 ↓ · 체력과 다름"
+      - "안정 4종 — 기복 감소 · **강하면 이득 약하면 손해** · 무작위 유지"
+      - "대상경주 5종 — 마지막 회 · 3배 · 거리 결정성 · 상금 몫 9%"
+      - "상대 성장률 스윕 (5종 × 300판)"
+      - "EV 재측정 (승식 공유, n=2500) — 7종 전부 음수"
+      - "npm run build / design check / protect / trace"
+    not_verified: []
+    known_limitations:
+      - "**강화 8회에 스탯 5종은 얇다.** 한 스탯당 1.6회 — 특화가 강제되는데 그게 좋은지 나쁜지는 사람이 봐야 안다."
+      - "대상경주 상금 몫이 9% 다. 처음 목표(15%)는 근거 없는 숫자였고 낮춰 잡았다 — **클라이맥스로 충분히 느껴지는지 미확인.**"
+      - "근성의 경합 판정(선두와 6% 이내)이 임의값이다."
+      - "안정 상한(`POISE_EFFECT` 0.035)은 '인기마 승률 25~45%' 검사가 간접적으로만 지킨다."
+  - task: "HT-007"
+    timestamp: "2026-08-06T16:36:33.000Z"
+    agent: "claude-opus-5[1m]"
+    prompt_or_goal: "동결은 '더 안 만든다'는 약속이 아니라 **남은 것을 어떻게 처리할지 정하는 일**이다. 미해결을 셋으로 안 가르면 '나중에'가 '영영'이 된다. 그리고 검사가 좌표만 보고 화면은 아무도 안 봐서, 겹침을 **매번 사람이 먼저 발견했다** — 그 구조 자체를 고쳐야 했다."
+    suggestion: "**M4 동결.** `freeze.test.ts` 가 시스템 2 · 승식 7 · 스탯 5 · 페이즈 6 을 못 박는다. 미해결 14건을 **고친다 / 받아들인다 / 사람이 판정한다** 셋으로 갈랐다. 근성 기전 버그 3건 수정(효과 0.09→0.7 · 경합폭 0.06→0.30). 최약체 함정을 배당표 **예상 승률**로 드러냈다. 파산을 화면에서 이야기로 바꿨다(규칙 불변). 사용자 판정으로 **경주 12회 고정**, `honest-length` 를 실측 10분으로 닫았다. **UI 겹침 9건** 수정과 **말 다시 그리기**."
+    human_change: "정리하고 m4진행해줘 → 권하는 방식으로 진행해줘 → (판정 5개 회신) → 이제 된거같아 → 이제 m5로 넘어가줘. **4번·7번은 답을 못 받았고 M5 로 넘긴다.**"
+    human_approval: true
+    files:
+      - "src/freeze.test.ts (신규 15개 — 동결 개수 · 파산 회복이 구조적으로 참인지)"
+      - "src/systems/race.ts (근성 3버그 · GRIT_EFFECT 0.7 · GRIT_BAND 0.30 · winProb · 승식 예시 문구 폭)"
+      - "src/systems/session.ts (RACES_MIN/MAX 12 고정 · recoveryPrize · canRecoverHere · progressLabel)"
+      - "src/ui/horse.ts (목·머리·갈기·몸통 다시 그림 · HORSE_BOX 내보냄)"
+      - "src/ui/tokens.ts (그대로 — 스프라이트용 hsl/SPRITE_BASE 는 되돌리며 제거)"
+      - "src/scenes/game.ts (L 좌표 12개 · 헤더 measureText 순서 · 트랙 이름 위치 · 파산 화면)"
+      - "src/kits/layout.ts (textWidth — 가로 폭 근사)"
+      - "src/main.ts (개발 전용 ?go= / ?t= — 빌드에서 빠진다)"
+      - "src/layout.test.ts · balance.test.ts · session.test.ts (검사 143 → 148)"
+      - "nan/gates.yaml (M4 기록 · honest-length 닫음 · M4 를 한 번 연 기록)"
+      - "docs/GAME_SPEC.md · docs/DECISIONS.md · nan/concepts/CON-001.yaml"
+    tests:
+      - "npm test (148개 / 7파일)"
+      - "freeze.test — 시스템 2 · 승식 7 · 스탯 5 · 페이즈 6 · 경주 12"
+      - "근성 경합폭 스윕 (bash/sed 루프, 소스 복원 확인)"
+      - "파산 실측 1,200판 — 경험 8% · 회복 11% · 파산 시점 중앙 9R/10R"
+      - "12R 고정 후 경제 재측정 1,200판 — 파산 11% · 참여율 95% · 최종 골드 ×0.24"
+      - "스탯 5종 효과 실측 1,200판 — 속력 +26.0%p … 안정 −1.8%p(3착 +4.4%p)"
+      - "배치 검사 — 옛 좌표에서 실제로 깨지는지 5건 확인"
+      - "헤드리스 크롬 스크린샷 — 5개 페이즈 육안 확인"
+      - "npm run build / design check / protect verify / trace validate"
+    not_verified:
+      - "**사람 판정 4번(유리 카드 대비가 충분한가)** — 답을 못 받았다. M5 로 넘긴다."
+      - "**사람 판정 7번(받아들이기로 한 넷에 동의하는가)** — 설명은 드렸고 명시적 동의는 못 받았다. M5 로 넘긴다."
+      - "12R 고정 이후의 **한 판 실제 분 수**. 실측 10분은 고정 이전 값이고, 랜덤 구간 중앙이 10경주였으므로 12분 안팎으로 **추정**했다. 숫자는 SPEC 에 안 적었다."
+    known_limitations:
+      - "**12R 고정으로 몰빵 방어가 사라졌다.** 8~12 랜덤이었던 이유가 '마지막 경주에 전 재산'을 막는 것이었다. 12R 이 대상경주(3배)인 것을 아니까 아껴뒀다 몰아넣는 것이 정답에 가까워진다. 남은 제동은 패리뮤추얼(크게 걸면 내 배당이 내려간다)뿐이다. **사용자가 실제 플레이 뒤 택했다.**"
+      - "**안정 스탯은 승률을 안 올린다**(−1.8%p). 설계대로지만(요행 우승도 같이 깎인다) 화면에는 '컨디션 기복이 줄어든다'만 적혀 있어서 **플레이어가 손해로 오해할 수 있다.**"
+      - "배치 검사는 **내가 목록에 넣은 것만** 본다. 이번에 세 번 놓쳤다 — 세로만 보고 가로를 안 봤고, 글자만 보고 그림을 안 봤고, 카드만 보고 그 밑 머리글을 안 봤다. **매번 사람이 화면에서 먼저 찾았다.**"
+      - "파산한 89% 가 회복 못 하는 이유는 회복이 어려워서가 아니라 **남은 경주가 없어서**다(파산 시점 중앙 9R/12R)."
