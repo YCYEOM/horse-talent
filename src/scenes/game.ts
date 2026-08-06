@@ -22,8 +22,7 @@ import {
   START_GOLD, RACES_MIN, RACES_MAX, type Tally, type Feature,
 } from "../systems/session";
 import { C, F, MINE_COAT, RIVAL_COATS, font, mono, withAlpha, card, accentGrad } from "../ui/tokens";
-import { drawHorse, type Mood } from "../ui/horse";
-import { drawHorseSprite, spriteReady } from "../ui/sprite";
+import { drawHorse, HORSE_BOX, type Mood } from "../ui/horse";
 
 export const W = 960;
 export const H = 640;
@@ -42,8 +41,15 @@ export const L = {
   /** 강화 연출은 **가운데 오버레이**다 — 5행 밑에 자리가 없다 */
   forgeBar: 340,
   forgeBarH: 30,
-  /** 창구 — 배당표 6행 */
-  oddsTop: 132,
+  /**
+   * 창구 — 평판 카드. **아래에 열 머리글이 붙는다.**
+   * 카드가 `bodyTop+8`(86)~`+42`(120) 이고 머리글 글자 윗선이 114.4 라 6px 겹쳤다.
+   * 검사가 카드는 재면서 **머리글은 목록에 없었다** — 그래서 통과했다.
+   */
+  repCardY: 82,
+  repCardH: 32,
+  /** 창구 — 배당표 6행. 머리글은 `oddsTop - 8` 에 앉는다 */
+  oddsTop: 140,
   oddsRowH: 52,
   /**
    * 배당표 카드와 그 안의 숫자 열. **전부 카드 안**이다 —
@@ -57,7 +63,7 @@ export const L = {
   colProb: 550,       // 오른쪽 정렬. 카드 오른끝(560) 안쪽
   /** 창구 오른쪽 — 승식 그리드 · 설명 카드 · 마권 */
   poolCol: 590,
-  poolGridTop: 132,
+  poolGridTop: 140,
   poolBtnH: 38,
   poolRowPitch: 44,
   /**
@@ -65,22 +71,17 @@ export const L = {
    * 검사가 이걸 "한 줄 라벨(42px)"로 모델링해서 74px 카드가 마권을 16px 덮는 것을 놓쳤다.
    * **높이를 코드와 검사가 같은 상수에서 읽는다.**
    */
-  poolDescY: 336,
+  poolDescY: 344,
   poolDescH: 74,
-  slipTop: 392,
+  slipTop: 400,
   slipH: 148,
-  buyTop: 550,        // 걸고 출발 / 안 걸고 출발 — 나란히
+  buyTop: 554,        // 걸고 출발 / 안 걸고 출발 — 나란히
   /** 이름 화면 — 말 그림. 부제(222)와 이름 카드(440) 사이에 들어가야 한다 */
   nameHorseY: 414,
   nameHorseS: 2.0,
-  /**
-   * 트랙 — 스프라이트 배율과 발이 레인 바닥에서 띄우는 높이.
-   * 1.8 · 8 이었는데 6번 레인 그림자가 잔디 밖으로 4px 나갔다. 검사가 못 박는다.
-   */
-  trackHorseS: 1.6,
-  trackFootLift: 13,
-  /** 스프라이트를 못 받았을 때 벡터로 대신하는 배율 */
-  trackFallbackS: 0.6,
+  /** 트랙 — 말 배율과 발이 레인 바닥에서 띄우는 높이. 검사가 못 박는다 */
+  trackHorseS: 0.6,
+  trackFootLift: 8,
   /** 마방 — 내 말 카드(40, 96, 300×396) 안. 꼬리가 왼쪽 테두리에 닿았다 */
   stableHorseX: 168,
   stableHorseY: 452,
@@ -573,23 +574,23 @@ export class Game {
     const gap = real - this.myForm;
     const edge = gap > 0.6 ? "저평가" : gap < -0.6 ? "과대평가" : "제값";
     const eCol = gap > 0.6 ? C.success : gap < -0.6 ? C.drop : C.textFaint;
-    card(ctx, 40, L.bodyTop + 8, 520, 34, { r: 10, fill: 0.05, border: 0.1 });
+    card(ctx, L.oddsCardX, L.repCardY, L.oddsCardW, L.repCardH, { r: 10, fill: 0.05, border: 0.1 });
     ctx.textAlign = "left"; ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
-    ctx.fillText("관중이 보는 내 말", 56, L.bodyTop + 30);
+    ctx.fillText("관중이 보는 내 말", 56, L.repCardY + 21);
     ctx.font = mono(F.md, 800); ctx.fillStyle = C.textMuted;
-    ctx.fillText(this.myForm.toFixed(1), 178, L.bodyTop + 30);
+    ctx.fillText(this.myForm.toFixed(1), 178, L.repCardY + 21);
     ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
-    ctx.fillText("실제", 224, L.bodyTop + 30);
+    ctx.fillText("실제", 224, L.repCardY + 21);
     ctx.font = mono(F.md, 800); ctx.fillStyle = C.gold;
-    ctx.fillText(real.toFixed(1), 262, L.bodyTop + 30);
+    ctx.fillText(real.toFixed(1), 262, L.repCardY + 21);
     ctx.font = font(F.sm, 800); ctx.fillStyle = eCol;
-    ctx.fillText(edge, 312, L.bodyTop + 30);
+    ctx.fillText(edge, 312, L.repCardY + 21);
     ctx.font = font(F.xs, 500); ctx.fillStyle = C.textFaint;
     ctx.fillText(
       gap > 0.6 ? "— 내 말 배당이 실제보다 높다"
         : gap < -0.6 ? "— 남의 말이 상대적으로 싸다"
         : "— 우위 없음. 공제율만큼 손해다",
-      362, L.bodyTop + 30);
+      362, L.repCardY + 21);
 
     // ── 배당표 6행. 단승·연승 배당은 기준선이라 항상 띄운다 ──────────────
     this.race.runners.forEach((r, i) => {
@@ -766,25 +767,18 @@ export class Game {
       const y = laneTop + laneH - L.trackFootLift;
       const coat = r.mine ? MINE_COAT : RIVAL_COATS[(r.gate - 1) % RIVAL_COATS.length];
       const done = p >= 1;
-      // **트랙만 스프라이트다.** 갤럽 프레임이 손으로 그린 다리보다 낫고 여기서는 말이 작다.
-      // 못 받았으면 벡터로 돌아간다 — 게임이 멈추는 것보다 낫다.
       const run = done ? this.raceT * 3 : this.raceT * 5 + i;
-      if (spriteReady())
-        drawHorseSprite(ctx, x, y, L.trackHorseS, coat, { run, num: r.gate, dim: !r.mine });
-      else
-        drawHorse(ctx, x, y, L.trackFallbackS, coat, { run, num: r.gate, dim: !r.mine });
+      drawHorse(ctx, x, y, L.trackHorseS, coat, { run, num: r.gate, dim: !r.mine });
+      const headTop = y + HORSE_BOX.top * L.trackHorseS;
       // 들어온 말에는 **착순 배지**를 붙인다 — 3착까지가 승식 판정이다
       if (done) {
         const place = res.order.indexOf(r.gate) + 1;
         const podium = place <= 3;
-        // **레인 오른쪽 고정.** 말 머리 위에 붙였더니 배지가 윗 레인으로 넘어갔다 —
-        // 스프라이트가 벡터보다 납작해서 머리 위에 자리가 없다.
-        const bx = W - 56, byy = laneTop + laneH / 2;
-        ctx.fillStyle = podium ? C.gold : withAlpha(C.scrim, 0.55);
-        ctx.beginPath(); ctx.roundRect(bx - 26, byy - 13, 52, 26, 13); ctx.fill();
+        ctx.fillStyle = podium ? C.gold : withAlpha(C.scrim, 0.45);
+        ctx.beginPath(); ctx.roundRect(x - 26, headTop - 30, 52, 26, 13); ctx.fill();
         ctx.fillStyle = podium ? C.ink : C.textMuted;
         ctx.font = mono(F.sm, 800); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText(`${place}착`, bx, byy);
+        ctx.fillText(`${place}착`, x, headTop - 17);
       }
       // **이름은 레인 왼쪽 위 고정.** 말 옆(`x - 40`)에 붙였더니 출발선에서
       // 화면 밖으로 잘리고, 달리는 내내 말 그림에 깔렸다.

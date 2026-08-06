@@ -1,16 +1,12 @@
 // horse-talent 진입점 — 캔버스와 입력만 잇는다. 게임은 `scenes/game.ts` 에 있다.
 import { Game, W, H } from "./scenes/game";
 import { C } from "./ui/tokens";
-import { loadHorseSprite } from "./ui/sprite";
 
 const app = document.getElementById("app")!;
 app.innerHTML = `<canvas id="game" width="${W}" height="${H}"></canvas>`;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 document.body.style.background = C.bg0;
-
-// 트랙 스프라이트를 미리 받아둔다. 못 받으면 트랙이 벡터 말로 돌아간다
-loadHorseSprite();
 
 const game = new Game();
 

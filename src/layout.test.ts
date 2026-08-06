@@ -12,7 +12,6 @@ import { FIELD_SIZE, POOL_ORDER, POOLS } from "./systems/race";
 import { STATS } from "./systems/stable";
 import { textBand, checkStack, textWidth } from "./kits/layout";
 import { HORSE_BOX } from "./ui/horse";
-import { SPRITE_BOX } from "./ui/sprite";
 import { F } from "./ui/tokens";
 
 describe("캔버스", () => {
@@ -32,7 +31,10 @@ describe("창구 — 배당표가 겹치지 않는다", () => {
   it("6행이 본문 안에 들고 안내줄을 안 침범한다", () => {
     const bands = [
       { name: "헤더", top: 0, bottom: L.headerBottom },
-      { name: "평판 카드", top: L.bodyTop + 8, bottom: L.bodyTop + 42 },
+      { name: "평판 카드", top: L.repCardY, bottom: L.repCardY + L.repCardH },
+      // **머리글이 목록에 없어서 평판 카드가 6px 덮는 것을 놓쳤다.**
+      // 카드는 재면서 그 바로 밑에 앉는 글자는 안 쟀다 — 사람이 화면에서 찾았다.
+      { name: "배당 머리글", ...textBand(L.oddsTop - 8, F.xs) },
       ...Array.from({ length: FIELD_SIZE }, (_, i) => ({
         name: `배당 ${i + 1}행`,
         top: L.oddsTop + i * L.oddsRowH,
@@ -53,7 +55,8 @@ describe("창구 — 승식 그리드와 마권", () => {
     const rows = Math.ceil(POOL_ORDER.length / 2);   // 2열
     const bands = [
       { name: "헤더", top: 0, bottom: L.headerBottom },
-      { name: "평판 카드", top: L.bodyTop + 8, bottom: L.bodyTop + 42 },
+      { name: "평판 카드", top: L.repCardY, bottom: L.repCardY + L.repCardH },
+      { name: "승식 라벨", ...textBand(L.poolGridTop - 8, F.xs) },
       { name: "승식 그리드", top: L.poolGridTop,
         bottom: L.poolGridTop + (rows - 1) * L.poolRowPitch + L.poolBtnH },
       // **카드 전체를 잡는다.** 이걸 "한 줄 라벨(42px)"로 적어놨다가
@@ -203,8 +206,8 @@ describe("우위가 화면에 있는가 — M3", () => {
    */
   it("평판 카드가 배당표 위, 헤더 아래에 자리를 갖는다", () => {
     expect(L.bodyTop + 8).toBeGreaterThan(L.headerBottom);
-    expect(L.bodyTop + 42).toBeLessThan(L.oddsTop);
-    expect(L.bodyTop + 42).toBeLessThan(L.poolGridTop);
+    expect(L.repCardY + L.repCardH).toBeLessThan(L.oddsTop);
+    expect(L.repCardY + L.repCardH).toBeLessThan(L.poolGridTop);
   });
 });
 
@@ -238,18 +241,13 @@ describe("말 그림이 제자리에 든다", () => {
   });
 
   /**
-   * 트랙은 **스프라이트**를 쓰고(HT-008), 못 받으면 벡터로 돌아간다.
-   * 둘의 세로 높이가 달라서(스프라이트 30단위 · 벡터 88단위) **양쪽 다 재야 한다** —
-   * 스프라이트만 보고 맞췄다가 대체 경로에서 겹치면 오프라인에서만 깨진다.
-   * 그림자가 발밑 `+6단위` 까지 간다.
+   * 레인 하나에 이름줄과 말이 같이 들어가야 한다. 그림자가 발밑 `+6단위` 까지 간다.
+   * (2026-08-07 에 트랙만 CC0 픽셀 스프라이트로 바꿨다가 **사용자 판정으로 되돌렸다.**)
    */
   it("트랙 — 여섯 레인에서 말과 이름이 안 겹치고 잔디를 안 벗어난다", () => {
     const top = L.headerBottom + 40, turfBottom = L.hint - 22;
     const laneH = (turfBottom - top) / FIELD_SIZE;
-    const paths = [
-      { what: "스프라이트", b: SPRITE_BOX, s: L.trackHorseS },
-      { what: "벡터 대체", b: HORSE_BOX, s: L.trackFallbackS },
-    ];
+    const paths = [{ what: "트랙", b: HORSE_BOX, s: L.trackHorseS }];
     for (const { what, b, s } of paths) {
       for (let i = 0; i < FIELD_SIZE; i++) {
         const laneTop = top + i * laneH;

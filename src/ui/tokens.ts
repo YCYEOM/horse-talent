@@ -64,13 +64,6 @@ export const RIVAL_COATS = [
   { body: "#D9C7A0", mane: "#7A6238" },
 ] as const;
 
-/**
- * 트랙 스프라이트 시트에서 가장 많이 쓰인 색(2,039픽셀 — 실측).
- * **색조 회전의 기준점**이라 우리가 고른 색이 아니라 **받아온 그림의 색**이다.
- * 그림을 갈면 이 값도 다시 재야 한다. 출처는 `docs/CREDITS.md`.
- */
-export const SPRITE_BASE = "#AF5E2D";
-
 /** 타이포 단계. 캔버스라 px 고정. 단계 사이 값을 쓰지 않는다. */
 export const F = {
   xs: 12, sm: 14, md: 16, lg: 19, xl: 23, xxl: 30, huge: 40, hero: 54,
@@ -80,24 +73,6 @@ export const font = (size: number, weight = 700) =>
   `${weight} ${size}px "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif`;
 export const mono = (size: number, weight = 700) =>
   `${weight} ${size}px ui-monospace, "SF Mono", Menlo, monospace`;
-
-/**
- * hex → HSL. 스프라이트 색조 회전이 **팔레트에서 각도를 계산**하는 데 쓴다 —
- * 각도를 손으로 적어두면 팔레트를 바꿀 때 안 따라온다(이 저장소가 다섯 번 덴 병).
- * `h` 는 도(0~360), `s`·`l` 은 0~1.
- */
-export function hsl(hex: string): { h: number; s: number; l: number } {
-  const n = parseInt(hex.replace("#", ""), 16);
-  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-  const l = (mx + mn) / 2;
-  if (d === 0) return { h: 0, s: 0, l };
-  const s = d / (1 - Math.abs(2 * l - 1));
-  const h = mx === r ? 60 * (((g - b) / d) % 6)
-    : mx === g ? 60 * ((b - r) / d + 2)
-    : 60 * ((r - g) / d + 4);
-  return { h: (h + 360) % 360, s, l };
-}
 
 /** 토큰 색에 알파를 입힌다. rgba 리터럴을 쓰면 토큰을 바꿔도 안 따라온다. */
 export function withAlpha(hex: string, a: number): string {
