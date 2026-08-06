@@ -36,7 +36,12 @@ for (const s of STEPS) {
 function tail(s) { return String(s).trim().split("\n").slice(-6).join("\n"); }
 
 const git = (c) => { try { return execSync(c, { encoding: "utf8" }).trim(); } catch { return "?"; } };
-const dirty = git("git status --porcelain").length > 0;
+// **`evidence/` 는 빼고 본다.** 증거를 만드는 행위 자체가 그 폴더를 더럽히므로
+// 포함하면 보고서가 영원히 "깨끗하지 않다"고 말한다 — 그러면 이 줄이 무의미해진다.
+// 묻는 것은 "이 증거가 나온 소스가 커밋된 상태인가" 뿐이다.
+const dirtyFiles = git("git status --porcelain")
+  .split("\n").filter((l) => l.trim() && !/\sevidence\//.test(` ${l.slice(3)}`));
+const dirty = dirtyFiles.length > 0;
 
 // 빌드 산출물 해시 — "이 증거가 어느 빌드에서 나왔나"에 답한다
 let bundles = [];
@@ -65,7 +70,7 @@ ${stopped ? STEPS.slice(results.length).map((s) => `| — | ${s.what} | \`${s.cm
 |---|---|
 | 커밋 | \`${git("git rev-parse --short HEAD")}\` |
 | 브랜치 | ${git("git rev-parse --abbrev-ref HEAD")} |
-| 작업 트리 | ${dirty ? "**깨끗하지 않다 — 커밋 안 된 변경이 섞여 있다**" : "깨끗하다"} |
+| 소스 트리 | ${dirty ? `**깨끗하지 않다 — 커밋 안 된 변경 ${dirtyFiles.length}건**\n\n\`\`\`\n${dirtyFiles.join("\n")}\n\`\`\`` : "깨끗하다 (`evidence/` 제외)"} |
 | node | ${process.version} |
 
 ## 빌드 산출물

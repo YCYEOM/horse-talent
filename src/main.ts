@@ -8,13 +8,16 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 document.body.style.background = C.bg0;
 
-const game = new Game();
+// 개발 전용 `?seed=` — 같은 화면을 두 번 찍으려면 시드가 고정돼야 한다
+const q = new URLSearchParams(location.search);
+const seedParam = import.meta.env.DEV ? q.get("seed") : null;
+const game = seedParam === null ? new Game() : new Game(Number(seedParam));
 
 // **개발 전용 — 화면 확인용 진입.** `?go=window` 처럼 주면 그 화면까지 클릭을 대신 눌러준다.
 // 캔버스 게임은 헤드리스로 사람이 볼 수가 없어서, 배치 겹침을 매번 사람이 발견했다.
 // 이것으로 `chrome --headless --screenshot` 이 페이즈별로 찍힌다. 빌드에는 안 들어간다.
 if (import.meta.env.DEV) {
-  const go = new URLSearchParams(location.search).get("go");
+  const go = q.get("go");
   const steps: Record<string, (string | [number, number])[]> = {
     stable: ["Enter"],
     window: ["Enter", " "],
@@ -28,7 +31,7 @@ if (import.meta.env.DEV) {
   }
   // `&t=` 로 시각을 고정한다. `--virtual-time-budget` 은 시계를 빨리 감아서
   // 경주가 순식간에 끝나버린다 — 달리는 중을 찍으려면 시계를 멈춰야 한다.
-  const t = new URLSearchParams(location.search).get("t");
+  const t = q.get("t");
   if (t !== null) {
     (game as unknown as { raceT: number }).raceT = Number(t);
     game.update = () => {};

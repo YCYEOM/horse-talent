@@ -11,13 +11,17 @@ const OUT = "evidence/screens";
 const PORT = 4271;
 // `t` 는 경주 시각 고정. `--virtual-time-budget` 이 시계를 빨리 감아서
 // 안 주면 트랙이 매번 정산 화면으로 넘어가 버린다.
+// **시드를 고정한다.** 안 하면 말 이름과 출주표가 매번 달라져 증거 화면이
+// 실행마다 바뀐다 — 재현되는 증거가 아니게 된다.
+// `t` 는 시각 고정. 이름 화면에서는 커서 깜빡임까지 멈춘다.
+const SEED = 20260807;
 const SHOTS = [
-  { name: "1-name", q: "" },
-  { name: "2-stable", q: "?go=stable" },
-  { name: "3-window", q: "?go=window" },
-  { name: "4-track", q: "?go=track&t=3.0" },
-  { name: "5-track-finish", q: "?go=track&t=6.5" },
-  { name: "6-settle", q: "?go=settle" },
+  { name: "1-name", q: `?seed=${SEED}&t=0` },
+  { name: "2-stable", q: `?seed=${SEED}&go=stable&t=0` },
+  { name: "3-window", q: `?seed=${SEED}&go=window&t=0` },
+  { name: "4-track", q: `?seed=${SEED}&go=track&t=3.0` },
+  { name: "5-track-finish", q: `?seed=${SEED}&go=track&t=6.5` },
+  { name: "6-settle", q: `?seed=${SEED}&go=settle&t=0` },
 ];
 
 mkdirSync(OUT, { recursive: true });

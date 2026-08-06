@@ -23,6 +23,7 @@ import {
 } from "../systems/session";
 import { C, F, MINE_COAT, RIVAL_COATS, font, mono, withAlpha, card, accentGrad } from "../ui/tokens";
 import { drawHorse, HORSE_BOX, type Mood } from "../ui/horse";
+import { rng } from "../kits/rng";
 
 export const W = 960;
 export const H = 640;
@@ -158,7 +159,9 @@ export class Game {
     this.races = raceCount(seed);
     this.feature = featureRace(seed);
     this.tally = newTally(this.races, START_GOLD);
-    this.horse = newHorse(randomName(() => Math.random()));
+    // **이름도 시드에서 나온다.** `Math.random()` 이었는데, 그러면 같은 시드로
+    // 두 번 띄워도 다른 말이 나온다 — 증거 화면이 매번 달라져 재현이 안 됐다(HT-008).
+    this.horse = newHorse(randomName(rng(seed ^ 0x5EED)));
   }
 
   // ── 진행 ────────────────────────────────────────────────────────────────
