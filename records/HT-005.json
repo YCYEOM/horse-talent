@@ -1,0 +1,98 @@
+{
+  "task_id": "HT-005",
+  "summary_of_changes": "M3 — 곡선 판정. `src/curve.test.ts` 신규(24개). **값은 하나도 안 만졌다** — 곡선이 없는 게 아니라 안 재본 수가 둘 있었다(역베팅 · 후반 상금 배분). 화면에 **평판 대비 실력**과 이번 경주 상금을 띄우고, CON-001 의 틀린 두 문장을 고쳐 재승인받았다.",
+  "why": "`projectGates.curve-not-repetition` 은 셋업 때 스스로 지목한 1번 위험이다. 첫 측정에서 중반·후반 최선의 수가 둘 다 '단승'이라 게이트에 걸리는 줄 알았다.",
+  "files_changed": [
+    "src/curve.test.ts (신규 24개)",
+    "src/scenes/game.ts (평판 카드 · 상금 표시 · 수입 구성)",
+    "src/layout.test.ts",
+    "nan/concepts/CON-001.yaml (반박 절 + 2차 승인)",
+    "nan/gates.yaml (curve 판정 기록)",
+    "docs/GAME_SPEC.md · docs/DECISIONS.md"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (118개)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "역베팅 EV — 관중 과대평가 시 인기마 +45%",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "후반 스탯 배분 — 같은 총합 27 이 382~3,939 G",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "국면 3종 최선의 수가 다른 범주",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / design check / protect / trace",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 — 국면이 다르게 느껴지는가",
+        "level": 3,
+        "status": "skipped"
+      }
+    ],
+    "not_verified": []
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "⚠ **조합 승식 정보 우위 희석은 여전히 미해결.** 삼복승 −6% · 삼쌍승 −12%. CON-001 의 '후반엔 삼쌍승'을 문서에서 고쳤을 뿐 설계로 풀지는 않았다.",
+    "평판 대비 실력을 숫자로 띄우는 것이 **답을 알려주는 것인지** 확인 안 됐다.",
+    "초반이 순손실 구간인 것은 HT-006(대상경주)이 완화했지만 실측 재확인 안 함."
+  ],
+  "out_of_scope_findings": [
+    "`curve.test.ts` 가 28초다. 관중 몬테카를로가 검사 시간의 대부분이다 — 캐싱 여지.",
+    "국면 정의가 코드에 없다(측정에만 있다). 화면이 '지금 어느 국면'을 말하지는 않는다."
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "nan/gates.yaml",
+      "nan/concepts/CON-001.yaml",
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**곡선이 없어 보이면 내 측정을 먼저 의심한다.** 안 재본 수가 둘 있었고 그게 전부였다. 값을 만졌으면 있는 곡선을 망쳤을 것이다.",
+      "**우위 원천이 화면에 없었다.** 이 게임의 유일한 우위(평판 ≠ 실제)가 어디에도 안 보였다 — 판단 재료 없이 판단하라고 요구한 셈이다.",
+      "**측정이 승인된 문서를 반박하면 문서를 고친다.** 코드만 맞추면 문서가 거짓말이 되고, 나중에 문서를 믿는 사람이 틀린 것을 읽는다."
+    ]
+  },
+  "rollback": {
+    "method": "`curve.test.ts` 와 화면의 평판·상금 표시를 지운다. CON-001 을 1차 승인 상태로, gates.yaml 의 curve 판정을 되돌린다. **밸런스 값은 안 건드렸다.**"
+  },
+  "design": {
+    "rendered_verification": false
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "at": "2026-08-06T14:04:09.341Z",
+    "notes": "정리하고 m4 진행해줘"
+  }
+}

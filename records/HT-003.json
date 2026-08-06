@@ -1,0 +1,105 @@
+{
+  "task_id": "HT-003",
+  "summary_of_changes": "네 가지 — (1) 경주가 연장 구간까지 돌아 **3착까지 들어오는 것을 보여준다**(`Result.finish`, 착순 배지, 관중 시뮬 `quick` 모드). (2) **도움말 버튼·오버레이 삭제**, 설명 카드에 예시 흡수. (3) **아트 2차** — 나무 패널 → 유리 카드 + 주 동작 그라데이션(`card()`·`accentGrad()`). (4) **강화 결과 누출 수정**(`revealLevel`·`shownLv`·`REVEAL`).",
+  "why": "플레이 지적 셋과 그 과정에서 발견한 버그 하나. 특히 (1) 은 승식 7종 중 넷이 3착까지 보는데 화면이 1착에서 끊긴 **기능 결함**이었고, (4) 는 1.65초 연출을 통째로 무의미하게 만들고 있었다.",
+  "files_changed": [
+    "src/systems/race.ts (EXTRA · finish · quick)",
+    "src/scenes/game.ts (트랙 3착 · 설명 카드 · 유리 카드 UI · revealLevel)",
+    "src/ui/tokens.ts (토큰 전면 교체 · card · accentGrad)",
+    "src/ui/horse.ts (C.hoof)",
+    "src/main.ts",
+    "src/race.test.ts · layout.test.ts",
+    "DESIGN.md · docs/GAME_SPEC.md · docs/DECISIONS.md"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (82개)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "결승선 4종 — 1착이 정확히 선에서 끊는다 · 착순대로 늦어진다 · 3착까지 연장 안에 든다",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "판정 누출 4종 — 판정 전 옛 단계 · 판정 후 실제 단계 · REVEAL 이 바늘과 같은 시각",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "배치 검사 — 창구 겹침 3건을 잡아 좌표 재조정",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "design check — 토큰 밖 하드코딩 hex 없음",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / protect verify / trace validate",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 — 아트 방향 판정",
+        "level": 3,
+        "status": "skipped"
+      }
+    ],
+    "not_verified": []
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "**아트 방향은 기계가 판정할 수 없다.** media.io 계열이 사용자가 말한 '현대식'과 같은지는 사람이 봐야 안다.",
+    "3착 뒤 0.8초가 적당한지 실측 없다.",
+    "유리 카드 대비(면 4~7%)가 모든 화면에서 충분한지 확인 안 됐다.",
+    "호버는 포인터 기기 전용이다. 터치에서는 설명 미리보기가 없다."
+  ],
+  "out_of_scope_findings": [
+    "`revealLevel` 같은 '연출 중 표시값' 개념이 nan PSH-004 에도 있었다 — 두 저장소가 같은 실수를 각자 했다.",
+    "관중 몬테카를로가 여전히 검사 시간의 대부분이다(82개에 30초). 캐싱하면 줄어든다."
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "DESIGN.md",
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**'결과를 먼저 확정하고 화면만 늦춘다'에서 늦춰야 할 화면은 하나가 아니다.** nan PSH-004 에서는 주사위 하나였지만 여기는 스탯 UI 가 네 군데(숫자·막대·비용·확률)에서 샜다. 패턴을 가져올 때 **적용 범위를 다시 세야 한다.**",
+      "**렌더 안에 묻힌 로직은 영영 검사가 안 된다.** `revealLevel` 을 순수 함수로 빼는 순간 검사 가능해졌고, 그게 재발 방지다.",
+      "**판정 근거를 안 보여주는 화면은 기능 결함이다.** 규칙이 3착까지 보는데 화면이 1착에서 끊는 것은 연출 문제가 아니었다.",
+      "**눌러야 보이는 설명은 안 눌러본 사람에게 없는 것과 같다.** 도움말 버튼을 지우고 항상 보이게 하니 정보량은 늘고 조작은 줄었다."
+    ]
+  },
+  "rollback": {
+    "method": "`EXTRA`·`finish`·`quick` 삭제 후 `splits` 정규화를 최대 누적으로 환원. `revealLevel`·`shownLv`·`REVEAL` 삭제. 토큰을 1차로 되돌리고 `card()`·`accentGrad()` 제거. 도움말 버튼·오버레이는 git 이력에서 복원."
+  },
+  "design": {
+    "rendered_verification": false
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "at": "2026-08-06T12:30:50.925Z",
+    "notes": "플레이 확인 후 승인"
+  }
+}

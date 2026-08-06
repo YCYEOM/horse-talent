@@ -1,0 +1,106 @@
+{
+  "task_id": "HT-002",
+  "summary_of_changes": "승식 2종 → **7종**(연승·단승·복승·쌍승·복연승·삼복승·삼쌍승). 배당 모델을 `CROWD_EXPONENT` 땜질에서 **몬테카를로 + Harville** 로 다시 썼다 — 관중이 `publicPower` 로 경주를 400판 상상해 승률을 얻고, 거기서 1·2·3착 순열 확률을 만들어 **순열 하나에서 7종을 전부 유도**한다. `Bet.gate` 가 `gates: number[]` 가 되고 순서 승식은 누른 순서가 착순이다. 승식 설명 3겹(항상 보이는 한 줄 · 호버 미리보기 · `?` 오버레이).",
+  "why": "M1 은 CON-001 이 못 박은 대로 2종만 넣었다. '승식이 곧 국면'이라는 컨셉의 곡선이 코드에 없었고, 사용자가 승식 확장과 뜻 설명을 요청했다.",
+  "files_changed": [
+    "src/systems/race.ts (Pool 7종 · selKey · isHit · crowdWinProbs · trifectaProbs · selectionProbs · winningKeys)",
+    "src/scenes/game.ts (승식 그리드 · 순서 선택 · 설명 3겹)",
+    "src/race.test.ts · balance.test.ts · layout.test.ts",
+    "docs/GAME_SPEC.md · docs/DECISIONS.md"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (74개)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "적중 판정 7종 — 착순 4-2-6 기준",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "각 승식의 확률 합 = slots (순열에서 유도됐다는 증거)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "패리뮤추얼 항등식 — 7종 전부",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "공개 정보 EV — 7종 전부 음수 (−12~−67%)",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "숨긴 정보 우위 — 7종 전부에서 공개보다 낫다",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / design check / protect verify / trace validate",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 플레이테스트 — 7종 한 번씩",
+        "level": 3,
+        "status": "skipped"
+      }
+    ],
+    "not_verified": []
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "⚠ **조합 승식에서 숨긴 정보의 우위가 희석된다.** 5R 스탯 8 을 관중이 4.8 로 볼 때 단승 +275% 인데 삼복승 −6% · 삼쌍승 −12% 다. 내 말 말고 다른 말들의 착순도 맞혀야 하는데 거기엔 정보 우위가 없다. **CON-001 의 '후반엔 삼쌍승으로 크게 번다'가 실측으로 안 받쳐진다** — M3 숙제.",
+    "Harville 은 근사다. 인기마의 조합 확률을 조금 과대평가한다(다만 favorite-longshot bias 와 같은 방향이라 현실적이다).",
+    "승식별 공제율이 20% 로 통일돼 있다. 실제 경마는 다르다.",
+    "한 경주에 마권 한 장만 산다. 박스 베팅 없음."
+  ],
+  "out_of_scope_findings": [
+    "관중 몬테카를로가 배당 한 번에 400판을 돈다 — 검사가 느려졌다. HT-003 에서 `quick` 모드로 완화했지만 캐싱 여지가 있다.",
+    "`selectionProbs` 가 만드는 212개 선택지는 UI 가 다 안 보여준다. 배당표에 단승·연승만 띄운다."
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**땜질한 상수는 확장할 때 드러난다.** `CROWD_EXPONENT` 6.0 은 단승 EV 를 억지로 맞춘 값이었고 조합 승식에는 대응하는 지수가 아예 없었다. 모델을 제대로 세우니 지수가 필요 없어졌다.",
+      "**여러 승식을 따로 계산하면 서로 모순된다.** 순열 하나에서 전부 유도하고 '합 = slots' 로 검사하면 그 모순이 원천 차단된다.",
+      "**규칙을 실제 세계에서 그대로 가져오면 설계 문제가 저절로 풀릴 때가 있다.** 패리뮤추얼이 정보 비대칭과 몰빵 제동을 공짜로 줬다.",
+      "**측정이 컨셉을 반박할 수 있다.** '후반엔 삼쌍승'은 그럴듯했지만 숫자가 아니라고 말했다. 반박을 문서에 남기고 M3 로 넘겼다."
+    ]
+  },
+  "rollback": {
+    "method": "`Pool` 을 2종으로, `gates` 를 `gate` 로 환원하고 `CROWD_EXPONENT` 를 되살린다. 몬테카를로·Harville·`selectionProbs`·`winningKeys` 를 지운다. UI 의 승식 그리드를 2버튼으로 되돌린다. **`runRace` 는 안 건드렸다.**"
+  },
+  "design": {
+    "rendered_verification": false
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "at": "2026-08-06T12:30:50.412Z",
+    "notes": "플레이 확인 후 승인"
+  }
+}

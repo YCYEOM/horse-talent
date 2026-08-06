@@ -1,0 +1,109 @@
+{
+  "task_id": "HT-006",
+  "summary_of_changes": "**대상경주(G1)** — 마지막 1회 · 상금 3배 · **거리 사전 공개**. **능력치 3 → 5종** — 근성(경합 축) · 안정(기복 축). 연쇄로 상대 성장률 0.45 → 0.32, 착순을 통과 시각으로, 강화 연출을 가운데 오버레이로.",
+  "why": "M3 가 구멍 셋을 드러냈다(초반이 죽었다 · 후반 판단이 하나 · 특화가 도박이다). 대상경주의 **거리 사전 공개**가 셋을 한 번에 막는다. 그리고 기존 스탯 셋은 전부 '어느 거리에 강한가' 한 축이라 넷째를 또 거리 스탯으로 넣으면 판단이 안 는다.",
+  "files_changed": [
+    "src/systems/stable.ts (STATS 5종 · DISTANCE_STATS · STAT_HINT)",
+    "src/systems/race.ts (근성·안정 · RIVAL_GROWTH 0.32 · 착순=통과시각 · 거리 강제)",
+    "src/systems/session.ts (featureRace · FEATURE_MULT · featurePrize)",
+    "src/scenes/game.ts (5행 · 헤더 목표 · 오버레이 연출)",
+    "src/curve.test.ts · session.test.ts · balance.test.ts · layout.test.ts",
+    "docs/GAME_SPEC.md · docs/DECISIONS.md · nan/concepts/CON-001.yaml"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (124개)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "근성 3종 — 올리면 승률 ↑ · 압도적이면 값 ↓ · 체력과 다름",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "안정 4종 — 기복 감소 · **강하면 이득 약하면 손해** · 무작위 유지",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "대상경주 5종 — 마지막 회 · 3배 · 거리 결정성 · 상금 몫 9%",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "상대 성장률 스윕 (5종 × 300판)",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "EV 재측정 (승식 공유, n=2500) — 7종 전부 음수",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / design check / protect / trace",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 — 대상경주가 판을 끄는가",
+        "level": 3,
+        "status": "skipped"
+      }
+    ],
+    "not_verified": []
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "**강화 8회에 스탯 5종은 얇다.** 한 스탯당 1.6회 — 특화가 강제되는데 그게 좋은지 나쁜지는 사람이 봐야 안다.",
+    "대상경주 상금 몫이 9% 다. 처음 목표(15%)는 근거 없는 숫자였고 낮춰 잡았다 — **클라이맥스로 충분히 느껴지는지 미확인.**",
+    "근성의 경합 판정(선두와 6% 이내)이 임의값이다.",
+    "안정 상한(`POISE_EFFECT` 0.035)은 '인기마 승률 25~45%' 검사가 간접적으로만 지킨다."
+  ],
+  "out_of_scope_findings": [
+    "**규모가 바뀌면 이전 값이 전부 의심 대상**이라는 M2 교훈이 그대로 재발했다(상대 성장률). 값 옆에 '어떤 규모에서 정했는지'를 적는 규율이 아직 없다.",
+    "검사 전체가 35초다. 관중 몬테카를로 캐싱이 슬슬 필요하다."
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md",
+      "nan/concepts/CON-001.yaml"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**스탯을 늘리면 상대 성장률이 따라 움직여야 한다.** 플레이어 예산은 그대로인데 쓸 곳이 늘면 죽음의 나선이 생긴다 — 대상경주 입상이 상금의 3% 까지 떨어졌다.",
+      "**손으로 고른 상수로 데는 네 번째다.** 검사가 `0.45` 를 복사해뒀다가 엔진이 0.32 로 바뀐 뒤 안 따라와서 '인기마 +8%' 라는 가짜 결과를 냈다. 노이즈인 줄 알고 표본을 키우다 발견했다.",
+      "**새 규칙이 기존 정의를 깨뜨리는지 본다.** 근성이 연장 구간에서 순위를 바꾸자 '착순'과 '통과 순서'가 어긋났다 — 먼저 들어온 말이 앞순위여야 한다.",
+      "**새 스탯은 '국면에 따라 값이 뒤집히는가'로 검증한다.** 어느 국면에서나 좋기만 하면 그건 판단이 아니라 정답이다. 안정은 뒤집혔다."
+    ]
+  },
+  "rollback": {
+    "method": "`STATS` 를 셋으로, `RIVAL_GROWTH` 를 0.45 로 되돌리고 근성·안정 보정과 대상경주를 지운다. `L.statRow` 3칸 · 강화 연출을 행 아래로. **승식·배당·확률표는 안 건드렸다.**"
+  },
+  "design": {
+    "rendered_verification": false
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "at": "2026-08-06T14:04:11.299Z",
+    "notes": "정리하고 m4 진행해줘"
+  }
+}

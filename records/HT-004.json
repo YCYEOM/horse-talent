@@ -1,0 +1,111 @@
+{
+  "task_id": "HT-004",
+  "summary_of_changes": "M2 — 경주 2회 고정에서 **8~12회 랜덤**으로. 신규 `src/systems/session.ts`(경주 수 · 상금 · 파산 · Tally)와 `src/session.test.ts`(한 판 전체 시뮬 300판). **상금을 신설했다** — 측정에서 이게 없으면 게임이 성립하지 않는다는 것이 드러났다. 결산을 12경주용으로(최고 배당 한 건 강조 + 요약 5줄), 파산 처리, 진행 표시를 범위로.",
+  "why": "`nan/gates.yaml` 의 M2 는 '한 판이 끝까지 간다 · 10~20분이 실측으로 확인된다' 이다. 2경주로는 경제가 도는지 알 수 없었고, `projectGates.honest-length` 가 다섯 게이트 중 유일한 미충족 항목이었다.",
+  "files_changed": [
+    "src/systems/session.ts (신규 — 경주 수 · 상금 · 파산 · Tally)",
+    "src/session.test.ts (신규 — 한 판 전체 시뮬 18개)",
+    "src/scenes/game.ts (8~12경주 · 상금 정산 · 파산 · 결산 확장)",
+    "src/layout.test.ts (M1 규모 → M2 규모)",
+    "nan/gates.yaml (honest-length 상태 기록)",
+    "docs/GAME_SPEC.md · docs/DECISIONS.md"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (100개)",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "정책 4종 × 12경주 × 400판 — 수입원 부재 발견",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "상금 규모 6종 스윕 — 실측으로 값 유도",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "한 판 시뮬 300판 — 참여율 98% · 파산 12% · 강화 8회",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "경주 수 8~12 범위 · 판마다 다름",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "상금 배분 · 후반 증가 · 4착 제외",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / design check / protect verify / trace validate",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 플레이 — 한 판 완주, 길이 '적당하다' 판정",
+        "level": 3,
+        "status": "pass"
+      }
+    ],
+    "not_verified": []
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "⚠ **상금은 CON-001 에 없던 메커니즘이다.** 컨셉은 '순위를 맞히면 골드'만 적었고 수입원을 정하지 않았다. 게임이 성립하지 않아 넣었고 사용자에게 명시적으로 알렸으나, **승인된 컨셉 문서는 아직 이 사실을 반영하지 않았다.**",
+    "**`honest-length` 를 절반만 닫았다.** 사람이 실제로 완주하고 '적당하다'고 판정했으므로 fail_if 는 해소됐지만 **초 단위 숫자는 없다.** GAME_SPEC 에 분 단위 값을 적지 않았다.",
+    "시뮬의 플레이 모형은 하나뿐이다. 사람이 이보다 잘하면 골드가 더 늘고 못하면 덜 는다 — 실제 분포는 더 넓을 것이다.",
+    "파산 후 남은 경주를 구경하는 것이 견딜 만한지 확인 안 됐다.",
+    "상금 값(3600 + 경주×420)은 한 플레이 모형 기준이다."
+  ],
+  "out_of_scope_findings": [
+    "`balance.test.ts` 가 29초로 전체 검사 시간의 대부분이다. 관중 몬테카를로 캐싱이 필요해지고 있다.",
+    "M1 의 시작 골드 1,000 이 2경주 기준이라 틀렸던 것처럼, **규모가 바뀌면 이전 값이 전부 의심 대상**이다. 값마다 '어떤 규모에서 정했는지'를 적어야 한다.",
+    "조합 승식의 정보 우위 희석(HT-002 발견)은 여전히 미해결 — M3 로 넘어간다."
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "nan/gates.yaml",
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**규모를 늘리면 이전 값이 전부 의심 대상이 된다.** 시작 골드 1,000 은 2경주 기준이라 12경주에서 무의미했다. 값 옆에 '어떤 규모에서 정했는지'를 적어야 한다.",
+      "**경주 하나씩 재는 검사로는 경제를 못 본다.** 각 베팅이 −20% 인 것은 알고 있었는데, 그것이 '어떤 전략도 못 이긴다'는 뜻인 줄은 12경주를 통째로 돌려보고서야 알았다. **단위 검사와 세션 검사는 다른 것을 본다.**",
+      "**지표가 무엇을 재는지 먼저 정해야 한다.** '최종 골드 0.8~2.5배'는 골드를 점수로 본 목표였다. 골드는 연료였고, 진짜 질문은 '끝까지 선택할 수 있었는가'였다. 결과에 맞춰 목표를 고친 것이 아니라 목표가 틀린 것을 고쳤다 — 이 둘을 혼동하면 밸런스가 자기 정당화가 된다.",
+      "**규칙을 실제 세계에서 가져오면 빠진 조각도 거기 있다.** 수입원이 없다는 것을 발견했을 때 해답은 발명이 아니라 관찰이었다 — 실제 마주는 상금으로 번다."
+    ]
+  },
+  "rollback": {
+    "method": "`src/systems/session.ts` 와 `src/session.test.ts` 를 지우고 `RACES_IN_M1 = 2` · `START_GOLD = 1000` 을 되살린다. 상금(`prizeFor`) 호출과 결산 확장·파산 처리를 제거한다. `nan/gates.yaml` 의 honest-length 기록과 GAME_SPEC 의 M2 절을 되돌린다. **엔진의 경주·강화·배당 규칙은 안 건드렸다.**"
+  },
+  "design": {
+    "rendered_verification": false
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "at": "2026-08-06T12:55:55.092Z",
+    "notes": "플레이 확인 — 한 판 길이 적당"
+  }
+}

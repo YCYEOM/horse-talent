@@ -1,0 +1,35 @@
+# BASS NAN 하네스 설정.
+#
+# **이 프로젝트는 대회가 아니다.** 48시간 잼 기준의 `event` 블록을 마일스톤 기반으로
+# 바꿨다 — 시계가 아니라 산출물이 게이트다. `nan/gates.yaml` 의 M1~M5 와 짝이다.
+# 하네스(컨셉 승인 · 런타임 승인 · trace · evidence)는 그대로 쓴다. 거기가 값이다.
+edition: nan2026
+displayName: horse-talent — 한 판 10~20분
+
+event:
+  # 플랫폼이 숫자를 기대하므로 남기되, **마감이 아니라 예산**으로 읽는다.
+  durationHours: 120
+  deliveryLockHour: 108
+
+workflow:
+  consecutiveFailuresBeforeBlocked: 2
+  maxReworksBeforeHumanDecision: 3
+  humanApprovalRequired:
+    - concept
+    - runtime
+
+runtime:
+  selected: null
+  targets: []
+
+# 채점 축. nan 의 5축(theme·playability·novelty·feasibility·visualClarity)에
+# **긴 게임에서만 의미가 생기는 축 하나를 더한다.**
+scoring:
+  conceptFit: 25
+  verticalSlice: 20
+  # 후반이 초반의 반복이 아닌가. nan 에는 없던 축이고 이 프로젝트의 1번 위험이다.
+  arcQuality: 20
+  buildReadiness: 15
+  teamReadiness: 10
+  deploymentStability: 7
+  licenseRisk: 3
