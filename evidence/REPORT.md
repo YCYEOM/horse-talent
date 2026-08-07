@@ -4,30 +4,27 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 37.4s |
-| ✓ | 빌드 | `npm run build` | 1.5s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.5s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 58.1s |
+| ✓ | 검사 | `npm test` | 34.9s |
+| ✓ | 빌드 | `npm run build` | 1.2s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.2s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 56.0s |
 | ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
 | ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 17.5s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 16.2s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `8124a55` |
+| 커밋 | `f3bb93e` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 6건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 3건**
 
 ```
 M .bass/nan2026/protection-lock.json
- M README.md
  M docs/DECISIONS.md
- M docs/GAME_SPEC.md
  M nan/gates.yaml
- M scripts/shots.mjs
 ``` |
 | node | v24.18.0 |
 
@@ -48,12 +45,12 @@ M .bass/nan2026/protection-lock.json
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 32258ms
+ ✓ src/balance.test.ts  (18 tests) 30086ms
 
  Test Files  8 passed (8)
       Tests  160 passed (160)
-   Start at  13:02:14
-   Duration  36.87s (transform 634ms, setup 0ms, collect 16.23s, tests 62.42s, environment 1ms, prepare 737ms)
+   Start at  13:07:27
+   Duration  34.51s (transform 373ms, setup 0ms, collect 14.37s, tests 57.88s, environment 1ms, prepare 597ms)
 ```
 
 ### 빌드
@@ -64,7 +61,7 @@ rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
 dist/assets/index-ZUkxtGLs.js  37.42 kB │ gzip: 14.49 kB
-✓ built in 165ms
+✓ built in 143ms
 ```
 
 ### 빌드 격리
