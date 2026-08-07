@@ -109,11 +109,16 @@ describe("경제 — 12경주를 견디는가", () => {
 describe("강화 — 한 판에 몇 번 들어가나", () => {
   const counts = runs.map((r) => r.forges.success + r.forges.keep + r.forges.drop);
 
-  /** 3스탯 × 10단계 = 30 을 **다 못 채우는 것이 의도다** — 어디에 몰아줄지가 결정이다. */
-  it("중앙값이 7~14회 — 최대치(50)를 다 못 채운다", () => {
+  /**
+   * 5스탯 × 10단계 = 50 을 **다 못 채우는 것이 의도다** — 어디에 몰아줄지가 결정이다.
+   * 폭이 7~14 였는데 HT-010(1착 상금 0.60 → 0.45)으로 중앙이 16 이 됐다.
+   * **"다 못 채운다"는 성질 자체는 `freeze.test` 가 직접 지킨다**(22회를 줘도 만렙 0%) —
+   * 여기 폭은 경제 규모가 크게 움직였는지 보는 지표다.
+   */
+  it("중앙값이 7~18회 — 최대치(50)를 다 못 채운다", () => {
     const m = median(counts);
     expect(m).toBeGreaterThanOrEqual(7);
-    expect(m).toBeLessThanOrEqual(14);
+    expect(m).toBeLessThanOrEqual(18);
   });
 
   it("세 갈래가 전부 실제로 나온다", () => {

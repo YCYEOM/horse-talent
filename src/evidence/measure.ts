@@ -26,8 +26,8 @@ import { RACES_MIN, RACES_MAX, START_GOLD } from "../systems/session";
 const CLAIMED = {
   favWin: 0.38,           // 인기마(능력치 1위) 승률
   weakestWin: 0.03,       // 최약체 — **0% 가 아니게 됐다**(HT-009). 함정이 아니다
-  brokeRate: 0.15,        // 파산 경험 비율
-  actRate: 0.91,          // 경주의 90% 이상에서 무언가 한 판의 비율
+  brokeRate: 0.14,        // 파산 경험 비율
+  actRate: 0.92,          // 경주의 90% 이상에서 무언가 한 판의 비율
   statSpeed: 0.211,       // 속력 3(6) → 10 일 때 승률 증가폭
   statPoise: 0.022,       // 안정 — 20경주에서 **부호가 뒤집혔다**. 아래 주석 참조
 } as const;

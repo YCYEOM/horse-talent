@@ -4,27 +4,30 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 34.9s |
-| ✓ | 빌드 | `npm run build` | 1.2s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.2s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 56.0s |
-| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
+| ✓ | 검사 | `npm test` | 53.5s |
+| ✓ | 빌드 | `npm run build` | 2.0s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.8s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 65.8s |
+| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.1s |
 | ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 16.2s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 18.1s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `f3bb93e` |
+| 커밋 | `a51a379` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 3건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 6건**
 
 ```
-M .bass/nan2026/protection-lock.json
- M docs/DECISIONS.md
- M nan/gates.yaml
+M docs/DECISIONS.md
+ M docs/GAME_SPEC.md
+ M src/evidence/measure.ts
+ M src/freeze.test.ts
+ M src/session.test.ts
+ M src/systems/session.ts
 ``` |
 | node | v24.18.0 |
 
@@ -32,7 +35,7 @@ M .bass/nan2026/protection-lock.json
 
 | 파일 | SHA-256 (앞 16) | 크기 |
 |---|---|---|
-| `index-ZUkxtGLs.js` | `877e91fb30cda096` | 38.1 kB |
+| `index-X92XyM7D.js` | `ee8f6b3b575b44b7` | 38.1 kB |
 
 ## 같이 있는 것
 
@@ -45,12 +48,12 @@ M .bass/nan2026/protection-lock.json
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 30086ms
+ ✓ src/balance.test.ts  (18 tests) 44966ms
 
  Test Files  8 passed (8)
       Tests  160 passed (160)
-   Start at  13:07:27
-   Duration  34.51s (transform 373ms, setup 0ms, collect 14.37s, tests 57.88s, environment 1ms, prepare 597ms)
+   Start at  14:06:52
+   Duration  52.75s (transform 718ms, setup 1ms, collect 25.15s, tests 88.18s, environment 2ms, prepare 1.20s)
 ```
 
 ### 빌드
@@ -60,8 +63,8 @@ M .bass/nan2026/protection-lock.json
 rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
-dist/assets/index-ZUkxtGLs.js  37.42 kB │ gzip: 14.49 kB
-✓ built in 143ms
+dist/assets/index-X92XyM7D.js  37.42 kB │ gzip: 14.49 kB
+✓ built in 233ms
 ```
 
 ### 빌드 격리

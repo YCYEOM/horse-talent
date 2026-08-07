@@ -167,8 +167,9 @@ describe("특화 압력 — 다 올릴 수는 없다", () => {
     return STATS.map((k) => h.stats[k]);
   }
 
-  // 실측 중앙이 14회다. 여유를 두고 그보다 많이 줘도 못 채워야 한다.
-  const runs = Array.from({ length: 400 }, (_, i) => afterForges(i + 1, 16));
+  // 실측 중앙이 16회다(HT-010 에서 14 → 16). **여유를 두고 22회를 줘도** 못 채워야 한다 —
+  // 중앙값과 같은 수로 검사하면 여유가 0 이고, 경제가 조금만 나아져도 바로 깨진다.
+  const runs = Array.from({ length: 400 }, (_, i) => afterForges(i + 1, 22));
 
   it("**5종을 다 만렙으로 올릴 수 없다** — 예산이 모자라야 배분이 판단이 된다", () => {
     expect(runs.filter((v) => v.every((x) => x === MAX_LV)).length).toBe(0);
