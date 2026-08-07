@@ -25,7 +25,7 @@ import { C, F, MINE_COAT, RIVAL_COATS, font, mono, withAlpha, card, accentGrad }
 import { drawHorse, HORSE_BOX, type Mood } from "../ui/horse";
 import { rng } from "../kits/rng";
 import {
-  loadRuns, saveRun, submitRun, ranked, rankOf, isBest, SHOWN,
+  loadRuns, saveRun, submitRun, fetchBoard, ranked, rankOf, isBest, SHOWN,
   type Run, type Board,
 } from "../systems/records";
 
@@ -81,9 +81,19 @@ export const L = {
   slipTop: 400,
   slipH: 148,
   buyTop: 554,        // 걸고 출발 / 안 걸고 출발 — 나란히
-  /** 이름 화면 — 말 그림. 부제(222)와 이름 카드(440) 사이에 들어가야 한다 */
-  nameHorseY: 414,
-  nameHorseS: 2.0,
+  /**
+   * 이름 화면 — **두 단.** 왼쪽에 이름, 오른쪽에 순위.
+   * 부제("이 이름이 결산에 박힌다")를 빼고 그 자리를 순위가 쓴다.
+   */
+  nameColX: 300,
+  nameCardW: 380,
+  nameCardY: 432,
+  nameBtnY: 522,
+  nameRankX: 570,
+  nameRankTop: 168,
+  /** 말 그림. 제목(202)과 이름 카드 사이에 들어가야 한다 */
+  nameHorseY: 406,
+  nameHorseS: 1.8,
   /**
    * 트랙 — 결승선과 달려나갈 수 있는 오른쪽 끝.
    * `trackMaxX` 는 **착순 배지(폭 52)까지 화면 안에 들어오는** 지점이다.
@@ -202,6 +212,11 @@ export class Game {
     // **이름도 시드에서 나온다.** `Math.random()` 이었는데, 그러면 같은 시드로
     // 두 번 띄워도 다른 말이 나온다 — 증거 화면이 매번 달라져 재현이 안 됐다(HT-008).
     this.horse = newHorse(randomName(rng(seed ^ 0x5EED)));
+    // 이름 화면에도 순위를 띄운다 — **시작 전에 무엇을 넘어야 하는지** 보여준다.
+    // 못 받으면 로컬로 떨어진다. 판이 끝나면 `finishSession` 이 다시 채운다.
+    this.runs = loadRuns();
+    this.sending = true;
+    fetchBoard().then((b) => { this.board = b; }).finally(() => { this.sending = false; });
   }
 
   // ── 진행 ────────────────────────────────────────────────────────────────
@@ -498,21 +513,29 @@ export class Game {
     else if (this.phase === "recap") this.drawRecap(ctx);
   }
 
+  /**
+   * 이름 화면. **두 단이다** — 왼쪽에 이름을 짓고 오른쪽에 순위를 본다.
+   *
+   * "이 이름이 결산에 박힌다" 부제는 뺐다(사용자 요청). 아래 안내줄이 이미
+   * 무엇을 하는 화면인지 말하고, 그 자리를 순위가 쓴다 —
+   * **시작 전에 무엇을 넘어야 하는지 보이는 편이 낫다.**
+   */
   private drawName(ctx: CanvasRenderingContext2D) {
+    const cx = L.nameColX;
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
     ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
-    ctx.fillText("HORSE TALENT", W / 2, 138);
+    ctx.fillText("HORSE TALENT", cx, 148);
     ctx.font = font(F.hero, 800); ctx.fillStyle = C.text;
-    ctx.fillText("내 말의 이름", W / 2, 192);
-    ctx.font = font(F.md, 500); ctx.fillStyle = C.textMuted;
-    ctx.fillText("이 이름이 결산에 박힌다", W / 2, 222);
+    ctx.fillText("내 말의 이름", cx, 202);
     // **배율과 발 위치를 검사가 계산한다** — 눈으로 어림했더니 귀가 부제를 뚫었다.
-    drawHorse(ctx, W / 2 - 16, L.nameHorseY, L.nameHorseS, MINE_COAT, { mood: "idle", num: 1 });
-    card(ctx, W / 2 - 200, 440, 400, 64, { r: 20, fill: 0.07, border: 0.16 });
-    ctx.font = font(F.xxl, 800); ctx.fillStyle = C.text;
+    drawHorse(ctx, cx - 16, L.nameHorseY, L.nameHorseS, MINE_COAT, { mood: "idle", num: 1 });
+    card(ctx, cx - L.nameCardW / 2, L.nameCardY, L.nameCardW, 64, { r: 20, fill: 0.07, border: 0.16 });
+    ctx.textAlign = "center"; ctx.font = font(F.xxl, 800); ctx.fillStyle = C.text;
     const caret = Math.floor(this.t * 2) % 2 ? "|" : " ";
-    ctx.fillText(this.horse.name + caret, W / 2, 484);
-    this.btn(ctx, W / 2 - 90, 526, 180, 50, "시작", "startGame:", { primary: true });
+    ctx.fillText(this.horse.name + caret, cx, L.nameCardY + 44);
+    this.btn(ctx, cx - 90, L.nameBtnY, 180, 50, "시작", "startGame:", { primary: true });
+
+    this.drawRanking(ctx, L.nameRankX, L.nameRankTop);
     this.hint(ctx, "타이핑해서 고치고 · Enter");
   }
 
@@ -984,7 +1007,7 @@ export class Game {
       ctx.fillText(v, L.recapRowValX, y);
     });
 
-    this.drawRanking(ctx);
+    this.drawRanking(ctx, L.rankX, L.rankTop);
     this.hint(ctx, this.board
       ? "클릭 / Space 로 새 판 · 순위는 모두가 함께 본다"
       : "클릭 / Space 로 새 판 · 서버에 못 닿아 이 브라우저 기록만 보인다");
@@ -995,16 +1018,17 @@ export class Game {
    * 셋을 구별해서 말한다 — 보내는 중 / 전역 / 이 브라우저.
    * 뭉치면 로딩 중에 "기록 없음"이라고 거짓말하게 된다.
    */
-  private drawRanking(ctx: CanvasRenderingContext2D) {
-    const x = L.rankX, top = L.rankTop;
+  private drawRanking(ctx: CanvasRenderingContext2D, x: number, top: number) {
     card(ctx, x, top, L.rankW, L.rankH, { r: 16, fill: 0.07, border: 0.16 });
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
 
     const global = !!this.board;
-    ctx.fillText(this.sending ? "기록 올리는 중" : global ? "전체 순위" : "내 기록", x + 16, top + 24);
-
     const mine = this.run;
+    // 시작 전에는 올릴 것이 없다 — "불러오는 중" 과 "올리는 중" 은 다른 말이다
+    const busy = this.sending ? (mine ? "기록 올리는 중" : "불러오는 중") : null;
+    ctx.fillText(busy ?? (global ? "전체 순위" : "내 기록"), x + 16, top + 24);
+
     const list = global ? this.board!.runs.slice(0, SHOWN) : ranked(this.runs).slice(0, SHOWN);
     // 오른쪽 꼬리표 — 최고 기록 갱신이 첫 판보다 먼저다
     ctx.textAlign = "right";
@@ -1044,8 +1068,11 @@ export class Game {
     const rank = global ? this.board!.rank : (mine ? rankOf(this.runs, mine) : 0);
     const total = global ? this.board!.total : this.runs.length;
     ctx.textAlign = "center"; ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
+    // **빈 것과 못 받은 것을 다르게 말한다.** 서버에 못 닿았는데 "아직 아무도 없다"고
+    // 하면 거짓말이다 — 전역에는 기록이 있을 수 있다.
     const foot = this.sending ? "…"
-      : !mine ? ""
+      : !list.length ? (global ? "아직 아무도 없다 — 첫 기록을 남겨라" : "서버에 못 닿았다")
+      : !mine ? `${total}판${global ? "" : " · 이 브라우저"}`
       : rank > SHOWN ? `이번 판 ${rank}등 / ${total}판`
       : `${total}판 중${global ? "" : " · 이 브라우저"}`;
     if (foot) ctx.fillText(foot, x + L.rankW / 2, top + L.rankH - 14);

@@ -224,13 +224,35 @@ describe("말 그림이 제자리에 든다", () => {
     left: x + HORSE_BOX.left * s, right: x + HORSE_BOX.right * s,
   });
 
-  it("이름 화면 — 부제와 이름 카드 사이에 든다", () => {
-    const h = box(W / 2 - 16, L.nameHorseY, L.nameHorseS);
-    const sub = textBand(222, F.md);          // "이 이름이 결산에 박힌다"
-    expect(h.top, "귀가 부제를 뚫는다").toBeGreaterThan(sub.bottom + 6);
-    expect(h.bottom, "발이 이름 카드에 닿는다").toBeLessThan(440 - 6);
-    expect(h.left).toBeGreaterThan(0);
-    expect(h.right).toBeLessThan(W);
+  /**
+   * 이름 화면은 **두 단**이다 — 왼쪽에 이름, 오른쪽에 순위.
+   * 부제("이 이름이 결산에 박힌다")를 빼고 그 자리를 순위가 쓴다(사용자 요청).
+   */
+  it("이름 화면 — 말이 제목과 이름 카드 사이에 들고 순위를 안 침범한다", () => {
+    const h = box(L.nameColX - 16, L.nameHorseY, L.nameHorseS);
+    const title = textBand(202, F.hero);      // "내 말의 이름"
+    expect(h.top, "귀가 제목을 뚫는다").toBeGreaterThan(title.bottom + 6);
+    expect(h.bottom, "발이 이름 카드에 닿는다").toBeLessThan(L.nameCardY - 6);
+    expect(h.left, "말이 화면 왼쪽 밖").toBeGreaterThan(0);
+    expect(h.right, "말이 순위 카드를 덮는다").toBeLessThan(L.nameRankX);
+  });
+
+  it("이름 화면 — 왼쪽 단과 순위 카드가 안 겹치고 화면 안에 든다", () => {
+    expect(L.nameColX + L.nameCardW / 2, "이름 카드가 순위를 덮는다")
+      .toBeLessThan(L.nameRankX - 12);
+    expect(L.nameColX - L.nameCardW / 2, "이름 카드가 화면 왼쪽 밖").toBeGreaterThan(0);
+    expect(L.nameRankX + L.rankW, "순위 카드가 화면 오른쪽 밖").toBeLessThanOrEqual(W - 20);
+    expect(L.nameRankTop + L.rankH, "순위 카드가 안내줄을 침범")
+      .toBeLessThan(textBand(L.hint, F.sm).top);
+  });
+
+  it("이름 화면 — 이름 카드·시작 버튼·안내줄이 세로로 안 겹친다", () => {
+    expect(checkStack([
+      { name: "제목", ...textBand(202, F.hero) },
+      { name: "이름 카드", top: L.nameCardY, bottom: L.nameCardY + 64 },
+      { name: "시작 버튼", top: L.nameBtnY, bottom: L.nameBtnY + 50 },
+      { name: "안내", ...textBand(L.hint, F.sm) },
+    ], H)).toEqual([]);
   });
 
   it("마방 — 내 말 카드 안에 여백을 두고 든다", () => {
