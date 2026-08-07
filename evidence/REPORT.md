@@ -4,30 +4,29 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 53.5s |
-| ✓ | 빌드 | `npm run build` | 2.0s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.8s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 65.8s |
+| ✓ | 검사 | `npm test` | 41.7s |
+| ✓ | 빌드 | `npm run build` | 1.5s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.4s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 58.7s |
 | ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.1s |
 | ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 18.1s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 18.9s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `a51a379` |
+| 커밋 | `ddca11e` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 6건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 5건**
 
 ```
-M docs/DECISIONS.md
- M docs/GAME_SPEC.md
- M src/evidence/measure.ts
- M src/freeze.test.ts
- M src/session.test.ts
- M src/systems/session.ts
+M evidence/measurements.md
+ M src/layout.test.ts
+ M src/race.test.ts
+ M src/scenes/game.ts
+ M src/systems/race.ts
 ``` |
 | node | v24.18.0 |
 
@@ -35,7 +34,7 @@ M docs/DECISIONS.md
 
 | 파일 | SHA-256 (앞 16) | 크기 |
 |---|---|---|
-| `index-X92XyM7D.js` | `ee8f6b3b575b44b7` | 38.1 kB |
+| `index-C6rg6FYy.js` | `ae116f2099ca5082` | 38.3 kB |
 
 ## 같이 있는 것
 
@@ -48,12 +47,12 @@ M docs/DECISIONS.md
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 44966ms
+ ✓ src/balance.test.ts  (18 tests) 35400ms
 
  Test Files  8 passed (8)
-      Tests  160 passed (160)
-   Start at  14:06:52
-   Duration  52.75s (transform 718ms, setup 1ms, collect 25.15s, tests 88.18s, environment 2ms, prepare 1.20s)
+      Tests  166 passed (166)
+   Start at  14:29:13
+   Duration  41.15s (transform 451ms, setup 0ms, collect 19.67s, tests 69.46s, environment 1ms, prepare 853ms)
 ```
 
 ### 빌드
@@ -63,8 +62,8 @@ M docs/DECISIONS.md
 rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
-dist/assets/index-X92XyM7D.js  37.42 kB │ gzip: 14.49 kB
-✓ built in 233ms
+dist/assets/index-C6rg6FYy.js  37.59 kB │ gzip: 14.56 kB
+✓ built in 165ms
 ```
 
 ### 빌드 격리

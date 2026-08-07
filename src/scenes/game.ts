@@ -13,7 +13,7 @@ import {
 import {
   buildRace, runRace, crowdBets, odds, settle, truePower, winProb,
   POOLS, POOL_ORDER, TAKEOUT, PLACE_SLOTS,
-  type Pool, type Race, type Result, type PoolBook, type Bet,
+  SEGMENTS, type Pool, type Race, type Result, type PoolBook, type Bet,
 } from "../systems/race";
 import {
   raceCount, progressLabel, prizeFor, purse, isBroke, newTally, forgeSummary,
@@ -80,6 +80,13 @@ export const L = {
   /** 이름 화면 — 말 그림. 부제(222)와 이름 카드(440) 사이에 들어가야 한다 */
   nameHorseY: 414,
   nameHorseS: 2.0,
+  /**
+   * 트랙 — 결승선과 달려나갈 수 있는 오른쪽 끝.
+   * `trackMaxX` 는 **착순 배지(폭 52)까지 화면 안에 들어오는** 지점이다.
+   */
+  trackStartX: 46,
+  goalX: W - 108,
+  trackMaxX: W - 46,
   /** 트랙 — 말 배율과 발이 레인 바닥에서 띄우는 높이. 검사가 못 박는다 */
   trackHorseS: 0.6,
   trackFootLift: 8,
@@ -337,7 +344,9 @@ export class Game {
       this.raceT += dt;
       // **3착이 결승선을 끊고 잠깐 뒤**에 끝난다. 1착에서 끊으면 승식 판정을 못 본다.
       const third = this.result.finish[this.result.order[2]];
-      if (this.raceT >= (third / 10) * RACE_SECS + 0.8) this.finishRace();
+      // **3착이 실제로 들어온 뒤에 끝낸다.** `10` 을 손으로 적어뒀는데 그게 `SEGMENTS` 다 —
+      // 엔진이 3착을 기다려 더 돌게 바뀌었으므로(HT-011) 여기서도 같은 상수를 봐야 한다.
+      if (this.raceT >= (third / SEGMENTS) * RACE_SECS + 0.8) this.finishRace();
     }
   }
 
@@ -748,7 +757,7 @@ export class Game {
   private drawTrack(ctx: CanvasRenderingContext2D) {
     const res = this.result!;
     // **3착이 들어올 때까지 돈다.** 승식이 3착까지 보는데 1착에서 끊으면 판정을 못 본다.
-    const t = (this.raceT / RACE_SECS) * 10;      // 구간 단위 시각
+    const t = (this.raceT / RACE_SECS) * SEGMENTS;   // 구간 단위 시각
     const posOf = (gate: number) => {
       const sp = res.splits.find((s) => s.gate === gate)!;
       const i = Math.min(sp.progress.length - 1, Math.floor(t));
@@ -772,7 +781,7 @@ export class Game {
       ctx.fillRect(0, top + i * laneH, W, laneH);
     });
     // 결승선
-    const GOAL_X = W - 108;
+    const GOAL_X = L.goalX;
     for (let y = top; y < turfBottom; y += 13) {
       ctx.fillStyle = ((y / 13) | 0) % 2 ? C.white : C.turfAlt;
       ctx.fillRect(GOAL_X, y, 10, 13);
@@ -784,7 +793,10 @@ export class Game {
       const p = posOf(r.gate);
       // 결승선을 넘으면 그 뒤로도 조금 더 달려 나간다
       const laneTop = top + i * laneH;
-      const x = 46 + Math.min(p, 1.22) * (GOAL_X - 46);
+      // **결승선 뒤로 조금 더 나가되 화면 안에 선다.**
+      // 1.22 를 곱하면 x 가 1,029 라 캔버스(960) 밖이었다 — 말과 착순 배지가 잘렸다.
+      // 3착을 기다리느라 먼저 들어온 말이 오래 머물게 되면서 눈에 띄었다(HT-011).
+      const x = Math.min(L.trackMaxX, L.trackStartX + p * (GOAL_X - L.trackStartX));
       // 말은 레인 **아래쪽**에 선다 — 위쪽은 이름 자리다
       const y = laneTop + laneH - L.trackFootLift;
       const coat = r.mine ? MINE_COAT : RIVAL_COATS[(r.gate - 1) % RIVAL_COATS.length];

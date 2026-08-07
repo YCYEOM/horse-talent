@@ -116,13 +116,22 @@ export interface Result {
   finish: Record<number, number>;
 }
 
-/** 1착이 결승선을 끊는 구간 수. */
-const SEGMENTS = 10;
+/** 1착이 결승선을 끊는 구간 수. 화면도 이 수로 시각을 환산한다. */
+export const SEGMENTS = 10;
+
 /**
- * 뒤 말들이 마저 들어오는 것을 보려고 더 도는 구간.
- * **승식이 3착까지 보는데 화면이 1착에서 끊기면 판정을 못 본다** — 기능 결함이었다.
+ * **3착이 들어올 때까지 돈다.** 고정 연장이 아니다.
+ *
+ * 전에는 `EXTRA = 10` 을 더 돌고 끝냈는데, 그 안에 못 들어온 말에게는
+ * `finish` 에 센티널(20)이 박혔다. 실측 —
+ *   · 3착이 못 들어온 경주 **2%** → 화면이 3착을 보여주기 전에 끊겼다(사용자 발견)
+ *   · 아무 말이라도 못 들어온 경주 81%
+ *   · 센티널이 둘 이상이라 **착순이 게이트 번호로 갈린 경주 34%** — 임의였다
+ *
+ * 매 구간 최소 0.2 는 전진하므로(`Math.max(0.2, …)`) 언제든 끝난다.
+ * 상한은 무한 루프 방어용이고, 실측 최대의 몇 배로 잡는다.
  */
-const EXTRA = 10;
+const MAX_SEGMENTS = SEGMENTS * 12;
 
 /**
  * **경주는 능력치로 정해지지 않는다. 확률이 정하고 능력치가 그 확률을 민다.**
@@ -244,8 +253,8 @@ export function runRace(race: Race, seed: number, quick = false): Result {
     return 1 + (rnd() - 0.5) * 2 * band;
   });
 
-  const segs = quick ? SEGMENTS : SEGMENTS + EXTRA;
-  for (let s = 0; s < segs; s++) {
+  /** 한 구간 전진. 아래에서 두 번 부른다 — 본 구간과 3착을 기다리는 연장. */
+  const step = (s: number) => {
     const late = Math.min(1, s / (SEGMENTS - 1));   // 0 → 1, 그 뒤로는 유지
     // **구간 시작 시점의 순위를 스냅샷한다.** 루프 안에서 `total` 을 고치므로
     // 그냥 읽으면 앞 게이트는 이번 구간 값, 뒷 게이트는 지난 구간 값을 보게 된다.
@@ -280,18 +289,31 @@ export function runRace(race: Race, seed: number, quick = false): Result {
       total[i] += Math.max(0.2, (drive - fade + grit) * condition[i] * jitter);
       splits[i].progress.push(total[i]);
     });
-  }
+  };
+
+  for (let s = 0; s < SEGMENTS; s++) step(s);
+
   // **결승선은 1착이 SEGMENTS 구간에 끊는 지점이다.** 나머지는 그 뒤에 들어온다.
-  const atGoal = splits.map((sp) => sp.progress[SEGMENTS - 1]);
-  const goal = Math.max(...atGoal);
+  const goal = Math.max(...splits.map((sp) => sp.progress[SEGMENTS - 1]));
+
+  // **3착이 결승선을 넘을 때까지 계속 돈다.** 관중 시뮬(`quick`)은 1착만 쓰므로 안 돈다.
+  if (!quick) {
+    const crossed = () => total.filter((v) => v >= goal).length;
+    for (let s = SEGMENTS; crossed() < PLACE_SLOTS && s < MAX_SEGMENTS; s++) step(s);
+  }
 
   // 0~1 로 정규화. 1.0 이 결승선이고 뒤 말들은 그 뒤 구간에서 1.0 을 넘는다.
   splits.forEach((sp) => { sp.progress = sp.progress.map((p) => p / goal); });
 
   // 각 말이 1.0 을 넘는 시각을 구간 사이 보간으로 찾는다.
+  //
+  // **3착까지는 반드시 실제 시각이 나온다** — 위에서 그때까지 돌았기 때문이다.
+  // 4착 이하는 아직 달리는 중일 수 있고, 그 경우 아래 값이 들어간다.
+  // 화면은 3착이 들어오면 끝나므로 그 말들은 어차피 안 보인다.
+  const stillRunning = splits[0].progress.length;
   const finish: Record<number, number> = {};
   for (const sp of splits) {
-    let t = SEGMENTS + EXTRA;
+    let t = stillRunning;
     for (let i = 0; i < sp.progress.length; i++) {
       if (sp.progress[i] < 1) continue;
       const prev = i > 0 ? sp.progress[i - 1] : 0;

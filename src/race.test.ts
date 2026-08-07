@@ -7,7 +7,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildRace, runRace, crowdBets, odds, settle, totalPayout, weights,
   truePower, publicPower, isHit, selKey, winningKeys, selectionProbs,
-  POOLS, POOL_ORDER, TAKEOUT, FIELD_SIZE,
+  POOLS, POOL_ORDER, TAKEOUT, FIELD_SIZE, PLACE_SLOTS, SEGMENTS,
   type PoolBook,
 } from "./systems/race";
 import { newHorse, type Horse } from "./systems/stable";
@@ -299,5 +299,64 @@ describe("배당은 진실이 아니다 — 컨셉의 핵심", () => {
     const hidden = crowdBets(race, 3, 3);     // 관중이 약하다고 본다
     const known = crowdBets(race, 10, 3);     // 관중이 강하다고 본다
     expect(odds(hidden, "win", [1], 0)).toBeGreaterThan(odds(known, "win", [1], 0));
+  });
+});
+
+/**
+ * **3착이 반드시 결승선을 넘고 끝난다.**
+ *
+ * 전에는 `SEGMENTS + EXTRA` 만큼 고정으로 돌고 끝냈고, 그 안에 못 들어온 말에게는
+ * `finish` 에 센티널을 박았다. 사용자가 화면에서 발견했다 —
+ * "3착까지 안 들어왔는데 어느정도 시간이 지나면 그냥 끝내버리네".
+ *
+ * 실측(수정 전) — 3착 미완주 **2%** · 아무 말이라도 미완주 81% ·
+ * 센티널이 둘 이상이라 **착순이 게이트 번호로 갈린 경주 34%**.
+ * 검사가 못 잡은 이유는 `order` 가 항상 6개를 돌려줘서 **결과가 그럴듯해 보였기** 때문이다.
+ */
+describe("3착까지는 반드시 들어온다", () => {
+  const N = 600;
+  const races = Array.from({ length: N }, (_, i) => {
+    const seed = i + 1;
+    return runRace(buildRace(1 + (seed % 20), newHorse("검사마"), seed), seed);
+  });
+
+  it("상위 3착의 통과 시각이 **실제 값**이다 — 아직 달리는 중이 아니다", () => {
+    for (const res of races) {
+      const running = res.splits[0].progress.length;   // 미완주에 들어가는 값
+      for (const gate of res.order.slice(0, PLACE_SLOTS)) {
+        expect(res.finish[gate], `게이트 ${gate}`).toBeLessThan(running);
+      }
+    }
+  });
+
+  it("상위 3착이 실제로 결승선(1.0)을 넘었다", () => {
+    for (const res of races) {
+      for (const gate of res.order.slice(0, PLACE_SLOTS)) {
+        const sp = res.splits.find((s) => s.gate === gate)!;
+        expect(Math.max(...sp.progress), `게이트 ${gate}`).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  /** 같은 시각이면 정렬이 게이트 번호로 갈린다 — 그게 34% 였다. */
+  it("상위 3착의 통과 시각이 서로 다르다 — 착순이 임의로 안 갈린다", () => {
+    for (const res of races) {
+      const t = res.order.slice(0, PLACE_SLOTS).map((g) => res.finish[g]);
+      expect(new Set(t).size).toBe(PLACE_SLOTS);
+      expect([...t]).toEqual([...t].sort((a, b) => a - b));   // 시각 순서 = 착순
+    }
+  });
+
+  it("필요한 만큼만 더 돈다 — 대부분 짧고, 상한에 안 붙는다", () => {
+    const lens = races.map((r) => r.splits[0].progress.length).sort((a, b) => a - b);
+    expect(lens[0]).toBeGreaterThanOrEqual(SEGMENTS);
+    expect(lens[Math.floor(N / 2)]).toBeLessThan(SEGMENTS * 2);
+    expect(lens[N - 1]).toBeLessThan(SEGMENTS * 12);          // 상한에 닿으면 방어가 터진 것
+  });
+
+  /** 관중 시뮬은 1착만 쓰므로 연장을 안 돈다 — 400회를 돌리는데 느려지면 안 된다. */
+  it("관중 시뮬(quick)은 연장을 안 돈다", () => {
+    const r = runRace(buildRace(5, newHorse("검사마"), 1), 1, true);
+    expect(r.splits[0].progress).toHaveLength(SEGMENTS);
   });
 });

@@ -245,6 +245,20 @@ describe("말 그림이 제자리에 든다", () => {
    * 레인 하나에 이름줄과 말이 같이 들어가야 한다. 그림자가 발밑 `+6단위` 까지 간다.
    * (2026-08-07 에 트랙만 CC0 픽셀 스프라이트로 바꿨다가 **사용자 판정으로 되돌렸다.**)
    */
+  /**
+   * **가로도 본다.** 결승선 뒤 달려나감이 `p × 1.22` 라 x 가 1,029 였다 —
+   * 캔버스가 960 이니 말과 착순 배지가 오른쪽으로 잘렸다.
+   * 세로 겹침만 재다가 또 가로를 놓쳤다(이번이 네 번째).
+   */
+  it("트랙 — 결승선을 지난 말과 착순 배지가 화면 안에 선다", () => {
+    const s = L.trackHorseS;
+    expect(L.trackMaxX + HORSE_BOX.right * s, "코가 화면 밖").toBeLessThanOrEqual(W);
+    expect(L.trackMaxX + 26, "착순 배지 오른쪽이 화면 밖").toBeLessThanOrEqual(W);
+    expect(L.trackStartX + HORSE_BOX.left * s, "출발선에서 꼬리가 화면 밖").toBeGreaterThanOrEqual(0);
+    // 결승선 뒤로 실제로 더 나갈 자리가 있어야 통과가 보인다
+    expect(L.trackMaxX).toBeGreaterThan(L.goalX);
+  });
+
   it("트랙 — 여섯 레인에서 말과 이름이 안 겹치고 잔디를 안 벗어난다", () => {
     const top = L.headerBottom + 40, turfBottom = L.hint - 22;
     const laneH = (turfBottom - top) / FIELD_SIZE;
