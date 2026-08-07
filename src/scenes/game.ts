@@ -265,13 +265,32 @@ export class Game {
     this.act(hit.id);
   }
 
+  /**
+   * 이름 글자 수 상한. **글자(코드포인트) 단위로 센다** — `String.length` 는
+   * 이모지를 둘로 세고, 조합 중인 한글도 낱자로 셀 수 있다.
+   */
+  static readonly MAX_NAME = 10;
+
+  /**
+   * 이름을 통째로 설정한다. **한 글자씩 받지 않는다** —
+   * 한글은 `keydown` 이 조합 중인 낱자(ㄱ, ㅏ)를 주므로 이어붙이면 "가나" 가 "ㄱㅏㄴㅏ" 가 된다.
+   * 조합은 브라우저 IME 가 해야 하고, `main.ts` 의 숨은 `<input>` 이 그 결과만 여기로 넘긴다.
+   */
+  setName(v: string) {
+    if (this.phase !== "name") return;
+    this.horse.name = [...v].slice(0, Game.MAX_NAME).join("");
+  }
+
+  /** 이름 화면에서 Enter — 이름이 있으면 시작한다. */
+  submitName(): boolean {
+    if (this.phase !== "name" || !this.horse.name.trim()) return false;
+    this.start();
+    return true;
+  }
+
   key(k: string) {
-    if (this.phase === "name") {
-      if (k === "Enter") { if (this.horse.name.trim()) this.start(); return; }
-      if (k === "Backspace") { this.horse.name = this.horse.name.slice(0, -1); return; }
-      if (k.length === 1 && this.horse.name.length < 10) this.horse.name += k;
-      return;
-    }
+    // 이름 입력은 IME 를 타야 해서 `setName`·`submitName` 으로 들어온다
+    if (this.phase === "name") return;
     if (k === " " || k === "Enter") {
       if (this.phase === "track") this.raceT = 99;
       else if (this.phase === "settle") this.next();

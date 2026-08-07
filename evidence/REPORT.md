@@ -4,40 +4,28 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 38.9s |
+| ✓ | 검사 | `npm test` | 37.9s |
 | ✓ | 빌드 | `npm run build` | 1.3s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.4s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 58.3s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.6s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 57.2s |
 | ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.1s |
-| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.0s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 17.6s |
+| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 18.2s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `a2420e7` |
+| 커밋 | `c4927db` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 16건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 4건**
 
 ```
-M .bass/nan2026/protection-lock.json
- M docs/DECISIONS.md
- M docs/GAME_SPEC.md
- M docs/submission/ai-use-log.yaml
- M nan/gates.yaml
- M src/balance.test.ts
- M src/curve.test.ts
- M src/evidence/measure.ts
- M src/freeze.test.ts
- M src/layout.test.ts
- M src/session.test.ts
- M src/systems/race.ts
- M src/systems/session.ts
-?? records/HT-009.json
-?? src/systems/scale.ts
-?? tasks/HT-009.md
+M docs/DECISIONS.md
+ M src/main.ts
+ M src/scenes/game.ts
+?? src/ime.test.ts
 ``` |
 | node | v24.18.0 |
 
@@ -45,7 +33,7 @@ M .bass/nan2026/protection-lock.json
 
 | 파일 | SHA-256 (앞 16) | 크기 |
 |---|---|---|
-| `index-d2xb8OUn.js` | `2ef69dd6b1a48ff3` | 37.2 kB |
+| `index-ZUkxtGLs.js` | `877e91fb30cda096` | 38.1 kB |
 
 ## 같이 있는 것
 
@@ -58,12 +46,12 @@ M .bass/nan2026/protection-lock.json
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 33076ms
+ ✓ src/balance.test.ts  (18 tests) 32482ms
 
- Test Files  7 passed (7)
-      Tests  155 passed (155)
-   Start at  10:07:19
-   Duration  38.45s (transform 463ms, setup 1ms, collect 17.29s, tests 64.50s, environment 1ms, prepare 871ms)
+ Test Files  8 passed (8)
+      Tests  160 passed (160)
+   Start at  12:34:28
+   Duration  37.44s (transform 373ms, setup 0ms, collect 15.93s, tests 63.13s, environment 1ms, prepare 733ms)
 ```
 
 ### 빌드
@@ -73,14 +61,14 @@ M .bass/nan2026/protection-lock.json
 rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
-dist/assets/index-d2xb8OUn.js  36.54 kB │ gzip: 14.10 kB
-✓ built in 143ms
+dist/assets/index-ZUkxtGLs.js  37.42 kB │ gzip: 14.49 kB
+✓ built in 131ms
 ```
 
 ### 빌드 격리
 
 ```
-[isolated] tsc 가 읽은 252개 파일 전부 프로젝트 안에 있다
+[isolated] tsc 가 읽은 253개 파일 전부 프로젝트 안에 있다
 ```
 
 ### 실측
