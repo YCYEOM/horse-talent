@@ -8,7 +8,6 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const OUT = "evidence/screens";
-const PORT = 4271;
 // `t` 는 경주 시각 고정. `--virtual-time-budget` 이 시계를 빨리 감아서
 // 안 주면 트랙이 매번 정산 화면으로 넘어가 버린다.
 // **시드를 고정한다.** 안 하면 말 이름과 출주표가 매번 달라져 증거 화면이
@@ -33,26 +32,41 @@ if (!existsSync(CHROME)) {
   process.exit(0);
 }
 
-// 개발 서버는 `?go=` 를 위해 필요하다 — 프로덕션 빌드에서는 그 진입이 빠진다
-const dev = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { stdio: "ignore" });
+// 개발 서버는 `?go=` 를 위해 필요하다 — 프로덕션 빌드에서는 그 진입이 빠진다.
+//
+// **포트를 고정하지 않는다.** 4271 에 `--strictPort` 로 물려 있었는데,
+// 이전 실행의 vite 가 아직 안 죽었으면 즉시 실패했다 —
+// 증거 실행이 **가끔 실패**했고 다음 번엔 통과했다. 그런 증거는 증거가 아니다.
+// vite 가 빈 포트를 고르게 두고 **실제로 뜬 주소를 읽는다.**
+const dev = spawn("npx", ["vite", "--port", "0"], { stdio: ["ignore", "pipe", "pipe"] });
 const stop = () => { try { dev.kill(); } catch {} };
 process.on("exit", stop);
 
-const wait = async () => {
-  for (let i = 0; i < 60; i++) {
-    try { await fetch(`http://localhost:${PORT}/`); return true; } catch {}
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
-};
+const base = await new Promise((resolve) => {
+  let buf = "";
+  const done = setTimeout(() => resolve(null), 30000);
+  const scan = (chunk) => {
+    buf += chunk;
+    const m = buf.match(/https?:\/\/localhost:(\d+)\//);
+    if (m) { clearTimeout(done); resolve(`http://localhost:${m[1]}`); }
+  };
+  dev.stdout.on("data", scan);
+  dev.stderr.on("data", scan);
+});
 
-if (!(await wait())) { stop(); throw new Error("개발 서버가 안 떴다"); }
+if (!base) { stop(); throw new Error("개발 서버 주소를 못 읽었다"); }
+for (let i = 0; ; i++) {
+  try { await fetch(`${base}/`); break; } catch {}
+  if (i > 40) { stop(); throw new Error(`개발 서버가 안 뜬다: ${base}`); }
+  await new Promise((r) => setTimeout(r, 250));
+}
+console.log(`[shots] 개발 서버 ${base}`);
 
 for (const s of SHOTS) {
   execFileSync(CHROME, [
     "--headless", "--disable-gpu", "--no-sandbox", "--hide-scrollbars",
     "--window-size=1000,700", `--screenshot=${OUT}/${s.name}.png`,
-    "--virtual-time-budget=3000", `http://localhost:${PORT}/${s.q}`,
+    "--virtual-time-budget=3000", `${base}/${s.q}`,
   ], { stdio: "ignore" });
   console.log(`[shots] ${s.name}.png`);
 }

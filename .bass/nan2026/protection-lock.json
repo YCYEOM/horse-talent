@@ -15,7 +15,7 @@
     },
     {
       "path": "nan/gates.yaml",
-      "sha256": "774d3f23f95606067cd6fe25eaf8f4ebda38a4e9d28ccf5508ff8c79f7727e65"
+      "sha256": "5c0a5af327f530b88d92084df09174769e662083856963a488114cd7f3b28d97"
     },
     {
       "path": "nan/acceptance.yaml",
