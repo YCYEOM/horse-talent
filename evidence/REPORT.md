@@ -4,26 +4,26 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 36.8s |
-| ✓ | 빌드 | `npm run build` | 1.4s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.4s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 53.0s |
-| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.1s |
-| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 22.8s |
+| ✓ | 검사 | `npm test` | 36.9s |
+| ✓ | 빌드 | `npm run build` | 1.5s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.5s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 55.2s |
+| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
+| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.0s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 22.7s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `eef4543` |
+| 커밋 | `caeb2f2` |
 | 브랜치 | main |
 | 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 3건**
 
 ```
-M evidence/screens/1-name.png
- M src/layout.test.ts
+M evidence/REPORT.md
+ M src/main.ts
  M src/scenes/game.ts
 ``` |
 | node | v24.18.0 |
@@ -32,7 +32,7 @@ M evidence/screens/1-name.png
 
 | 파일 | SHA-256 (앞 16) | 크기 |
 |---|---|---|
-| `index-KJjzTzcQ.js` | `80061f57843443d1` | 42.6 kB |
+| `index-DDWocoY6.js` | `306bd1432461b1c2` | 42.6 kB |
 
 ## 같이 있는 것
 
@@ -45,12 +45,12 @@ M evidence/screens/1-name.png
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 31065ms
+ ✓ src/balance.test.ts  (18 tests) 31223ms
 
  Test Files  9 passed (9)
       Tests  185 passed (185)
-   Start at  15:32:22
-   Duration  36.35s (transform 719ms, setup 0ms, collect 16.99s, tests 60.95s, environment 2ms, prepare 1.18s)
+   Start at  15:41:33
+   Duration  36.35s (transform 597ms, setup 1ms, collect 16.65s, tests 60.79s, environment 1ms, prepare 876ms)
 ```
 
 ### 빌드
@@ -60,8 +60,8 @@ M evidence/screens/1-name.png
 rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
-dist/assets/index-KJjzTzcQ.js  41.82 kB │ gzip: 16.21 kB
-✓ built in 153ms
+dist/assets/index-DDWocoY6.js  41.90 kB │ gzip: 16.23 kB
+✓ built in 190ms
 ```
 
 ### 빌드 격리

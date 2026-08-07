@@ -25,6 +25,9 @@ const game = seedParam === null ? new Game() : new Game(Number(seedParam));
 // 이것으로 `chrome --headless --screenshot` 이 페이즈별로 찍힌다. 빌드에는 안 들어간다.
 if (import.meta.env.DEV) {
   const go = q.get("go");
+  // **개발 진입으로 만든 판은 전역에 안 쓴다.** 증거 스크린샷이 결산을 찍을 때마다
+  // 실제 순위표에 가짜 기록이 쌓였다.
+  if (go) game.postRuns = false;
   const steps: Record<string, (string | [number, number])[]> = {
     stable: ["Enter"],
     window: ["Enter", " "],

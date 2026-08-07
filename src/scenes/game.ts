@@ -174,6 +174,12 @@ export class Game {
    */
   private board: Board | null = null;
   private sending = false;
+  /**
+   * 전역 순위에 **쓸지**. 개발 진입(`?go=`)으로 만든 판은 사람이 논 것이 아니므로 안 쓴다 —
+   * `npm run evidence` 가 결산 화면을 찍을 때마다 실제 순위표에 가짜 기록이 쌓였다.
+   * 읽기는 그대로 한다. 화면에 순위가 보여야 배치를 확인할 수 있다.
+   */
+  postRuns = true;
   horse: Horse;
   gold = START_GOLD;
   raceNo = 1;
@@ -308,6 +314,7 @@ export class Game {
     this.runs = saveRun(this.run);
     // 전역은 뒤따라온다. 오면 화면이 바뀌고, 안 오면 로컬이 그대로 보인다.
     this.board = null;
+    if (!this.postRuns) { fetchBoard().then((b) => { this.board = b; }); return; }
     this.sending = true;
     submitRun(this.run)
       .then((b) => { this.board = b; })
