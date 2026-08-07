@@ -4,8 +4,8 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 34.7s |
-| ✓ | 빌드 | `npm run build` | 1.3s |
+| ✓ | 검사 | `npm test` | 34.5s |
+| ✓ | 빌드 | `npm run build` | 1.2s |
 | ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.2s |
 | ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 34.0s |
 | ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
@@ -17,17 +17,16 @@
 
 | | |
 |---|---|
-| 커밋 | `d1fb17d` |
+| 커밋 | `2a81ad6` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 6건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 5건**
 
 ```
-M .github/workflows/pages.yml
- M package-lock.json
- M package.json
- M scripts/evidence.mjs
- M tsconfig.json
-?? scripts/isolated.mjs
+M .bass/nan2026/protection-lock.json
+ M docs/submission/ai-use-log.yaml
+ M nan/gates.yaml
+ M records/HT-008.json
+ M tasks/HT-008.md
 ``` |
 | node | v24.18.0 |
 
@@ -48,12 +47,12 @@ M .github/workflows/pages.yml
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 29584ms
+ ✓ src/balance.test.ts  (18 tests) 29488ms
 
  Test Files  7 passed (7)
       Tests  148 passed (148)
-   Start at  08:08:43
-   Duration  34.10s (transform 422ms, setup 0ms, collect 11.01s, tests 57.12s, environment 1ms, prepare 667ms)
+   Start at  09:32:19
+   Duration  33.96s (transform 393ms, setup 0ms, collect 10.69s, tests 56.76s, environment 1ms, prepare 672ms)
 ```
 
 ### 빌드
@@ -64,7 +63,7 @@ rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
 dist/assets/index-BMgG1WvW.js  36.43 kB │ gzip: 14.04 kB
-✓ built in 123ms
+✓ built in 134ms
 ```
 
 ### 빌드 격리
