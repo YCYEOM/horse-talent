@@ -7,6 +7,7 @@
 // nan 이 정적 화면에서만 겹침을 여섯 번 냈다. 손으로 고른 좌표를 눈으로만 확인하지 않는다.
 import { describe, it, expect } from "vitest";
 import { W, H, L, REVEAL, revealLevel, EXAMPLE_ORDER } from "./scenes/game";
+import { RACES } from "./systems/scale";
 import { RACES_MIN, RACES_MAX, START_GOLD, MIN_BET } from "./systems/session";
 import { FIELD_SIZE, POOL_ORDER, POOLS } from "./systems/race";
 import { STATS } from "./systems/stable";
@@ -155,9 +156,9 @@ describe("마방 — 능력치 3행과 강화 막대", () => {
 });
 
 describe("M2 규모", () => {
-  it("경주 수가 12회 고정이다", () => {
-    expect(RACES_MIN).toBe(12);
-    expect(RACES_MAX).toBe(12);
+  it("경주 수가 고정이고 `scale.ts` 에서 온다", () => {
+    expect(RACES_MIN).toBe(RACES_MAX);
+    expect(RACES_MIN).toBe(RACES);
   });
 
   it("시작 골드가 첫 경주에 강화 1~2회 + 베팅을 감당한다", () => {

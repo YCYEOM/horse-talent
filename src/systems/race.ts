@@ -12,6 +12,7 @@
 
 import { rng } from "../kits/rng";
 import { STATS, DISTANCE_STATS, type Horse, type StatKey } from "./stable";
+import { rivalForm, RIVAL_START, RIVAL_END, RACES } from "./scale";
 
 /** 승식 7종. 한국마사회 표기를 그대로 쓴다 (HT-002). */
 export type Pool =
@@ -168,10 +169,13 @@ export const JITTER = 0.40;      // 구간 잡음 ±40% (주행량 대비)
 /** 상대 능력치가 기준선에서 벌어지는 폭. 넓으면 최약체가 이길 수 없는 말이 된다. */
 export const SPREAD = 1.1;
 /**
- * 경주마다 상대가 세지는 속도. **스탯 종류 수와 함께 봐야 하는 값이다** —
- * 플레이어의 강화 예산은 그대로인데 쓸 곳이 늘면 상대를 못 따라간다.
+ * 경주당 상대가 세지는 폭. **이제 파생값이다** — 곡선은 `scale.ts` 가 끝점으로 정한다.
+ *
+ * 예전에는 이게 손으로 고른 상수(0.45 → 0.32)였고, 경주 수를 12 → 20 으로 바꾸자
+ * 마지막 상대가 9.08 까지 올라가 파산이 11% → 39% 가 됐다(HT-009).
+ * 검사와 문서가 이 값을 참조하므로 이름은 남기되 **계산해서 낸다.**
  */
-export const RIVAL_GROWTH = 0.32;
+export const RIVAL_GROWTH = (RIVAL_END - RIVAL_START) / Math.max(1, RACES - 1);
 
 const RIVAL_HEAD = ["블랙", "하늘", "복숭아", "돌풍", "노을", "구름", "청람", "설원"];
 const RIVAL_TAIL = ["아웃", "소", "핑크", "스톰", "글로우", "댄스", "라인", "체이서"];
@@ -186,10 +190,9 @@ export function buildRace(no: number, mine: Horse, seed: number, forced?: number
   const distance = forced ?? DISTANCES[Math.floor(rnd() * DISTANCES.length)];
   const runners: Runner[] = [{ gate: 1, name: mine.name, stats: { ...mine.stats }, mine: true }];
   // 상대 평균이 내 말 시작값(3)과 비슷해야 첫 경주가 승부가 된다. no 에 따라 밀어 올린다.
-  // **0.45 → 0.32 (HT-006).** 0.45 는 강화 8회를 스탯 3종에 몰아넣던 시절 값이다 —
-  // 5종이 되어 같은 예산을 더 나누게 되자 상대를 못 따라가 죽음의 나선이 생겼다
-  // (대상경주 입상이 상금의 3% 까지 떨어졌다).
-  const base = 3 + (no - 1) * RIVAL_GROWTH;
+  // **끝점에서 파생된다**(`scale.ts`) — 경주 수를 바꿔도 마지막 상대가 같다.
+  // `3 + (no-1) * 0.32` 였을 때는 20경주에서 상대가 9.08 까지 올라가 무너졌다(HT-009).
+  const base = rivalForm(no);
   for (let i = 0; i < FIELD_SIZE - 1; i++) {
     const stats = {} as Record<StatKey, number>;
     for (const k of STATS) {

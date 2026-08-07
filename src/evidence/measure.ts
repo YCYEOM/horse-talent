@@ -24,12 +24,12 @@ import { RACES_MIN, RACES_MAX, START_GOLD } from "../systems/session";
  * 어긋나면 이 표가 ⚠ 를 찍는다. **그때 고칠 곳은 코드가 아니라 문서다**(M5 는 값 조정 단계가 아니다).
  */
 const CLAIMED = {
-  favWin: 0.34,           // 인기마(능력치 1위) 승률
-  weakestWin: 0.00,       // 최약체 승률
-  brokeRate: 0.11,        // 파산 경험 비율 (12R 고정 기준)
-  actRate: 0.95,          // 경주의 90% 이상에서 무언가 한 판의 비율
-  statSpeed: 0.260,       // 속력 3(6) → 10 일 때 승률 증가폭
-  statPoise: -0.018,      // 안정 — **유일하게 음수다**
+  favWin: 0.38,           // 인기마(능력치 1위) 승률
+  weakestWin: 0.03,       // 최약체 — **0% 가 아니게 됐다**(HT-009). 함정이 아니다
+  brokeRate: 0.15,        // 파산 경험 비율
+  actRate: 0.91,          // 경주의 90% 이상에서 무언가 한 판의 비율
+  statSpeed: 0.211,       // 속력 3(6) → 10 일 때 승률 증가폭
+  statPoise: 0.022,       // 안정 — 20경주에서 **부호가 뒤집혔다**. 아래 주석 참조
 } as const;
 
 const N_RACE = 1500, N_SESSION = 1200;
@@ -103,13 +103,17 @@ for (const k of STATS) {
   say(`| ${STAT_NAME[k]} | ${pp(m.win - b0.win)} | ${pp(m.top3 - b0.top3)} | ${(m.avg - b0.avg).toFixed(2)} |`);
 }
 say();
-say("**안정만 승률이 안 오른다 — 설계대로다.** 컨디션 폭을 줄이면 요행 우승도 같이 깎이고,");
+say("**안정은 승률을 거의 안 올린다 — 설계대로다.** 컨디션 폭을 줄이면 요행 우승도 같이 깎이고,");
 say("대신 요행으로 무너지는 일이 더 줄어 3착이 오른다.");
+say();
+say("12경주 시절에는 **−1.8%p** 로 음수였다. 20경주가 되며 같은 지점의 상대가 약해져");
+say("기준 말이 상대적으로 강해졌고, **강한 말에게 안정은 지키는 값이 된다** —");
+say("부호가 뒤집힌 것이 아니라 설계가 말한 대로 국면이 바뀐 것이다.");
 say();
 say("| 항목 | 문서 | 실측 | |");
 say("|---|---|---|---|");
 say(`| 속력 승률 증가 | ${pp(CLAIMED.statSpeed)} | ${pp(statGain.speed!)} | ${mark(near(statGain.speed!, CLAIMED.statSpeed, 0.05))} |`);
-say(`| 안정 승률 증가 | ${pp(CLAIMED.statPoise)} | ${pp(statGain.poise!)} | ${mark(statGain.poise! < 0.03)} |`);
+say(`| 안정 승률 증가 | ${pp(CLAIMED.statPoise)} | ${pp(statGain.poise!)} | ${mark(near(statGain.poise!, CLAIMED.statPoise, 0.03))} |`);
 say();
 say("### 거리 특화");
 say();

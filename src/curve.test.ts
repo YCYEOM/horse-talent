@@ -11,12 +11,23 @@ import {
   buildRace, runRace, crowdBets, settle, truePower, POOLS, type Pool,
 } from "./systems/race";
 import { prizeFor } from "./systems/session";
+import { RACES } from "./systems/scale";
 import type { Horse, StatKey } from "./systems/stable";
 
 const N = 500;
 const flat = (lv: number): Horse => ({ name: "t", stats: { speed: lv, accel: lv, stamina: lv, grit: 3, poise: 3 } });
 
 /** 내 말을 1착 자리에 넣고 나머지는 인기 순으로 채웠을 때의 수익률. */
+/**
+ * **국면을 경주 번호로 박지 않는다.** 12경주 시절 `11R = 후반` 을 손으로 적어뒀다가
+ * 20경주가 되자 그게 중반이 되어 검사 셋이 깨졌다(HT-009) —
+ * 이 저장소가 규모 변경으로 데는 세 번째다.
+ * 비율로 적으면 경주 수를 바꿔도 "초반·중반·후반"의 뜻이 유지된다.
+ */
+const EARLY = Math.max(1, Math.round(RACES * 0.15));
+const MID = Math.max(1, Math.round(RACES * 0.5));
+const LATE = Math.max(1, RACES - 1);
+
 function roiMine(pool: Pool, no: number, lv: number, form: number, n = N) {
   let got = 0;
   for (let s = 1; s <= n; s++) {
@@ -48,7 +59,7 @@ function roiFav(pool: Pool, no: number, lv: number, form: number, n = N) {
 }
 
 /** 그 배분으로 그 거리를 뛰었을 때의 평균 상금. */
-function prizeAt(stats: Record<StatKey, number>, distance: number, no = 11, n = N) {
+function prizeAt(stats: Record<StatKey, number>, distance: number, no = LATE, n = N) {
   let p = 0;
   for (let s = 1; s <= n; s++) {
     const race = buildRace(no, { name: "t", stats }, s);
@@ -71,17 +82,17 @@ describe("초반 — 베팅으로는 못 번다. 강화와 상금으로 버티�
   it("내 말이 약하고 평판이 정확하면 어느 승식도 +EV 가 아니다", () => {
     // 1마리 승식은 자주 맞아 표본이 안정적이라 좁게 본다
     for (const pool of ["place", "win"] as Pool[]) {
-      expect(roiMine(pool, 2, 3, 3.2, 800)).toBeLessThan(1.05);
+      expect(roiMine(pool, EARLY, 3, 3.2, 800)).toBeLessThan(1.05);
     }
     // 2~3마리 조합은 드물게 맞고 크게 주므로 표본 변동이 크다 — 넓게 본다
     for (const pool of ["quinella", "exacta", "quinellaPlace", "trio", "trifecta"] as Pool[]) {
-      expect(roiMine(pool, 2, 3, 3.2, 800)).toBeLessThan(1.3);
+      expect(roiMine(pool, EARLY, 3, 3.2, 800)).toBeLessThan(1.3);
     }
   });
 
   it("초반 상금이 후반보다 훨씬 작다 — 초반은 버티는 구간이다", () => {
-    expect(prizeAt(flat(3).stats, 1400, 2, 300))
-      .toBeLessThan(prizeAt(flat(9).stats, 1400, 11, 300) / 2);
+    expect(prizeAt(flat(3).stats, 1400, EARLY, 300))
+      .toBeLessThan(prizeAt(flat(9).stats, 1400, LATE, 300) / 2);
   });
 });
 
@@ -91,12 +102,12 @@ describe("중반 — 정보 레버리지. 내 말 단승이 정점", () => {
    * 여기서만 크게 벌 수 있고, 그것이 컨셉의 "내가 아는 것과 배당이 아는 것의 차이"다.
    */
   it("실력이 평판을 앞서면 내 말 단승이 크게 +EV 다", () => {
-    expect(roiMine("win", 6, 8, 5.0)).toBeGreaterThan(1.4);
+    expect(roiMine("win", MID, 8, 5.0)).toBeGreaterThan(1.4);
   });
 
   it("평판이 실력을 따라잡으면 그 우위가 사라진다", () => {
-    const hidden = roiMine("win", 6, 8, 5.0);
-    const known = roiMine("win", 6, 8, 8.0);
+    const hidden = roiMine("win", MID, 8, 5.0);
+    const known = roiMine("win", MID, 8, 8.0);
     expect(known).toBeLessThan(hidden);
     expect(known).toBeLessThan(1.15);
   });
@@ -111,19 +122,19 @@ describe("역베팅 — 강화가 감소하면 남의 말이 싸진다", () => {
    * 컨셉의 정보 비대칭이 **양방향으로** 작동한다는 뜻이다.
    */
   it("관중이 내 말을 과대평가하면 인기마 단승이 +EV 가 된다", () => {
-    expect(roiFav("win", 6, 5, 8.0)).toBeGreaterThan(1.15);
+    expect(roiFav("win", MID, 5, 8.0)).toBeGreaterThan(1.15);
   });
 
   it("과대평가가 클수록 역베팅이 더 좋다", () => {
-    expect(roiFav("win", 6, 5, 8.0)).toBeGreaterThan(roiFav("win", 6, 4, 7.0));
+    expect(roiFav("win", MID, 5, 8.0)).toBeGreaterThan(roiFav("win", MID, 4, 7.0));
   });
 
   it("평판이 정확하면 역베팅도 손해다 — 우위는 오가격에서만 나온다", () => {
-    expect(roiFav("win", 6, 6, 6.0)).toBeLessThan(1.0);
+    expect(roiFav("win", MID, 6, 6.0)).toBeLessThan(1.0);
   });
 
   it("과대평가일 때 내 말에 거는 것은 최악이다", () => {
-    expect(roiMine("win", 6, 5, 8.0)).toBeLessThan(roiFav("win", 6, 5, 8.0));
+    expect(roiMine("win", MID, 5, 8.0)).toBeLessThan(roiFav("win", MID, 5, 8.0));
   });
 });
 
@@ -163,8 +174,8 @@ describe("후반 — 상금 극대화. 판단이 베팅에서 강화 배분으�
 
   /** 후반에는 베팅 우위가 줄고 상금이 압도한다 — 그래서 판단이 옮겨간다. */
   it("후반 한 경주 상금이 베팅 기대 수익보다 크다", () => {
-    const prize = prizeAt(flat(9).stats, 1400, 11);
-    const betEdge = (roiMine("win", 11, 9, 8.0) - 1) * 100;   // 100 G 걸었을 때
+    const prize = prizeAt(flat(9).stats, 1400, LATE);
+    const betEdge = (roiMine("win", LATE, 9, 8.0) - 1) * 100;   // 100 G 걸었을 때
     expect(prize).toBeGreaterThan(betEdge * 5);
   });
 });
@@ -180,24 +191,24 @@ describe("곡선 판정 — 국면마다 최선의 수가 다른 범주다", () 
    */
   it("초반의 최선은 '안 건다' 다 — 단순 승식이 전부 본전 미만이다", () => {
     for (const p of ["place", "win"] as Pool[]) {
-      expect(roiMine(p, 2, 3, 3.2, 800)).toBeLessThan(1.0);
+      expect(roiMine(p, EARLY, 3, 3.2, 800)).toBeLessThan(1.0);
     }
   });
 
   it("중반의 최선은 '내 말' 이다 — 역베팅보다 낫다", () => {
-    expect(roiMine("win", 6, 8, 5.0)).toBeGreaterThan(roiFav("win", 6, 8, 5.0));
+    expect(roiMine("win", MID, 8, 5.0)).toBeGreaterThan(roiFav("win", MID, 8, 5.0));
   });
 
   it("감소 상태의 최선은 '남의 말' 이다 — 내 말보다 낫다", () => {
-    expect(roiFav("win", 6, 5, 8.0)).toBeGreaterThan(roiMine("win", 6, 5, 8.0));
+    expect(roiFav("win", MID, 5, 8.0)).toBeGreaterThan(roiMine("win", MID, 5, 8.0));
   });
 
   /** 셋의 방향이 서로 다르다 = 판단의 종류가 다르다. */
   it("세 국면의 최선이 서로 다른 선택을 가리킨다", () => {
     const earlyBest = Math.max(...(["place", "win"] as Pool[])
-      .map((p) => roiMine(p, 2, 3, 3.2, 800)));
-    const midMine = roiMine("win", 6, 8, 5.0);
-    const dropFav = roiFav("win", 6, 5, 8.0);
+      .map((p) => roiMine(p, EARLY, 3, 3.2, 800)));
+    const midMine = roiMine("win", MID, 8, 5.0);
+    const dropFav = roiFav("win", MID, 5, 8.0);
     expect(earlyBest).toBeLessThan(1.0);      // 초반: 안 건다
     expect(midMine).toBeGreaterThan(1.4);     // 중반: 내 말
     expect(dropFav).toBeGreaterThan(1.15);    // 감소: 남의 말
@@ -209,7 +220,7 @@ describe("근성 — 막판 경합에서만 값을 한다", () => {
    * **체력과 다른 축이어야 한다.** 체력은 *혼자* 안 무너지는 것이고
    * 근성은 *붙어 있을 때* 안 밀리는 것이다. 크게 앞서거나 뒤지면 값이 0 이어야 한다.
    */
-  function winRate(stats: Record<StatKey, number>, no = 6, n = 600) {
+  function winRate(stats: Record<StatKey, number>, no = MID, n = 600) {
     let w = 0;
     for (let s = 1; s <= n; s++) {
       if (runRace(buildRace(no, { name: "t", stats }, s), s).order[0] === 1) w++;
@@ -261,8 +272,8 @@ describe("안정 — 기복을 줄인다. 국면에 따라 값이 뒤집힌다",
 
   it("3단계가 중립이고 올리면 착순이 안정된다", () => {
     const mid = { speed: 7, accel: 7, stamina: 7, grit: 3, poise: 3 };
-    expect(spread({ ...mid, poise: 10 }, 6)).toBeLessThan(spread(mid, 6));
-    expect(spread({ ...mid, poise: 1 }, 6)).toBeGreaterThan(spread({ ...mid, poise: 10 }, 6));
+    expect(spread({ ...mid, poise: 10 }, MID)).toBeLessThan(spread(mid, MID));
+    expect(spread({ ...mid, poise: 1 }, MID)).toBeGreaterThan(spread({ ...mid, poise: 10 }, MID));
   });
 
   /**
@@ -284,6 +295,6 @@ describe("안정 — 기복을 줄인다. 국면에 따라 값이 뒤집힌다",
 
   it("무작위를 없애지는 않는다 — 만렙 안정도 착순이 갈린다", () => {
     const s = { speed: 7, accel: 7, stamina: 7, grit: 3, poise: 10 };
-    expect(spread(s, 6)).toBeGreaterThan(0.5);
+    expect(spread(s, MID)).toBeGreaterThan(0.5);
   });
 });

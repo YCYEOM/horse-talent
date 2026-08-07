@@ -1,0 +1,128 @@
+{
+  "task_id": "HT-009",
+  "summary_of_changes": "**경주 12 → 20**(한 판 5분 → 약 8분 산술). 그냥 바꾸면 파산 11%→39% 로 무너져서, **규모를 `src/systems/scale.ts` 한 곳으로 모으고 압박 곡선을 기울기가 아니라 끝점으로** 적었다 — 경주 수를 바꿔도 마지막 상대가 6.5 로 같다. 검사가 박아둔 경주 번호(`11R = 후반`)도 비율 파생으로 바꿨다.",
+  "why": "**`honest-length` 를 잘못 닫았다.** M4·M5 에서 쓴 \"약 10분\" 은 처음 플레이한 사람의 시간이었고 규칙을 아는 사람은 12경주를 5분에 끝낸다. 목표의 절반이다. 그 차이를 안 묻고 하나를 실측으로 삼았다.",
+  "files_changed": [
+    "src/systems/scale.ts (신규 — RACES · RIVAL_START/END · rivalForm)",
+    "src/systems/race.ts (RIVAL_GROWTH 를 파생값으로 · base = rivalForm(no))",
+    "src/systems/session.ts (RACES_MIN/MAX 를 scale 에서 재수출)",
+    "src/curve.test.ts (EARLY/MID/LATE 를 RACES 에서 파생)",
+    "src/balance.test.ts (raceWhereRivalsAre — 경주 번호 대신 뜻을 적는다)",
+    "src/freeze.test.ts (규모 파생 검사 4개 추가)",
+    "src/layout.test.ts · src/session.test.ts (12 하드코딩 제거)",
+    "src/evidence/measure.ts (CLAIMED 갱신)",
+    "docs/GAME_SPEC.md · docs/DECISIONS.md · nan/gates.yaml",
+    "src/freeze.test.ts (특화 압력 3종 추가 — 검사 152 → 155)"
+  ],
+  "models_used": [
+    {
+      "role": "worker",
+      "alias": "auto",
+      "actual_model": "claude-opus-5[1m]",
+      "followed_recommendation": false
+    }
+  ],
+  "verification": {
+    "evaluations_run": [
+      {
+        "name": "npm test (152개) — 148 → 152",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "경제 재측정 800판 — 파산 15%(3~35%) · 참여율 91%(90%+) · 인기마 31.8%(25~45%)",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "옛 기울기 상수로 되돌려 경제 검사 3개가 깨지는 것 확인",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "규모 파생 검사 — 경주 8·12·20·40 에서 마지막 상대가 전부 6.5",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "buildRace 호출부 36곳 — 하나도 안 건드렸다",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "특화 압력 3종 — 강화 16회로도 5종 만렙 0% · 전부 7이상 <5% · 총량 천장의 60% 미만",
+        "level": 2,
+        "status": "pass"
+      },
+      {
+        "name": "npm run evidence 7단계 전부 통과 · 문서 어긋남 0건",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "실측이 최약체 0%→3% 를 ⚠ 로 잡아냄 — 문서를 고쳤다",
+        "level": 3,
+        "status": "pass"
+      },
+      {
+        "name": "npm run build / design check / trace validate",
+        "level": 1,
+        "status": "pass"
+      },
+      {
+        "name": "사람 — 20경주가 실제로 몇 분인가",
+        "level": 3,
+        "status": "skipped"
+      }
+    ],
+    "not_verified": [
+      "**20경주가 실제로 몇 분인가.** 8분은 25초×20 이라는 산술이고 실측이 아니다. `honest-length` 를 `partial` 로 두고 사람이 완주할 때까지 안 닫는다.",
+      "**후반이 늘어지는가.** 경주 15~20 이 '빨리 끝나라'가 되는지는 사람이 봐야 안다."
+    ]
+  },
+  "critic_findings": {
+    "total": 0,
+    "open_high_or_medium": 0
+  },
+  "known_limitations": [
+    "**참여율 91% 가 기준선(90%) 바로 위다.** 여유가 2%p 도 안 된다 — 다음에 값을 만지면 쉽게 깨진다.",
+    "**한 판 총 상금이 4,465 → 11,010 으로 2.5배다.** 상금이 `no` 에 비례하는데 경주가 늘어서다. 최종 골드 배수는 ×0.24 → ×0.29 로 비슷하지만 숫자의 자릿수가 커졌다.",
+    "**강화 기회가 8 → 14 회로 늘었다.** 검사로 '다 올릴 수는 없다'는 확인했지만(만렙 0%), 특화의 *체감*이 약해졌는지는 사람이 봐야 안다."
+  ],
+  "out_of_scope_findings": [
+    "**최약체 승률 0% → 3%.** M4 가 '순수 함정'으로 받아들이기로 한 항목이 절로 풀렸다 — 압박 곡선이 완만해져 출주표가 촘촘해졌다. **실측 스크립트가 ⚠ 로 잡아냈다.**",
+    "**안정 스탯 승률 −1.8%p → +2.2%p 로 부호가 뒤집혔다.** 버그가 아니라 HT-006 이 '국면에 따라 값이 뒤집히는 유일한 스탯'이라고 설계한 그대로다.",
+    "**검사가 규모를 세 군데에 박아뒀다** — curve 의 국면 번호, balance 의 경주·단계 쌍, freeze/layout/session 의 12. 규모 상수를 한 곳으로 모으는 것만으로는 부족했다."
+  ],
+  "docs_updated": {
+    "needed": true,
+    "updated": [
+      "docs/GAME_SPEC.md",
+      "docs/DECISIONS.md",
+      "nan/gates.yaml",
+      "tasks/HT-009.md"
+    ]
+  },
+  "lessons": {
+    "recorded": true,
+    "candidates": [
+      "**곡선은 기울기가 아니라 끝점으로 적는다.** 기울기로 적으면 규모가 바뀔 때 다시 계산해야 하는데 아무도 안 한다. 이 저장소가 같은 이유로 두 번 무너졌다(스탯 3→5, 경주 12→20).",
+      "**'실측'이라는 말을 쓰기 전에 누구의 실측인지 물어라.** 처음 하는 사람과 아는 사람의 시간은 두 배 차이였고, 나는 그걸 안 묻고 게이트를 닫았다.",
+      "**추정을 문서에 적으면 실측처럼 읽힌다.** 12R 고정이 판을 20% 늘린다고 추정해 '12분 안팎'이라 적었는데 방향조차 반대였다.",
+      "**규모 상수를 한 곳으로 모아도 검사가 여전히 박아두고 있다.** 소스는 `scale.ts` 하나를 보는데 검사는 `11R = 후반` 을 손으로 적어놨다. 검사도 뜻을 적어야 한다.",
+      "**길이를 연출로 채우지 않는다.** 강제 대기가 이미 판의 26% 이고, 목표를 맞추려면 5배로 해야 했다. 늘려야 할 것은 판단의 횟수지 기다림이 아니다."
+    ]
+  },
+  "rollback": {
+    "method": "`scale.ts` 를 지우고 `RACES_MIN/MAX` 를 12 로, `race.ts` 의 `base` 를 `3 + (no-1) * 0.32` 로 되돌린다. 검사의 `EARLY/MID/LATE` 와 `raceWhereRivalsAre` 를 옛 숫자로. **`buildRace` 호출부를 안 건드렸으므로 되돌릴 곳이 좁다.**"
+  },
+  "design": {
+    "rendered_verification": true
+  },
+  "human_approval": {
+    "approved": true,
+    "approver": "yeomyooncheol",
+    "at": "2026-08-07T01:05:03.000Z",
+    "notes": "지금 플레이 타임은 r12까지 했을때 5분정도야 → (판 길이 문항) 20경주로 — 약 8분"
+  }
+}

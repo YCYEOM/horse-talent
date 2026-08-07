@@ -9,7 +9,9 @@
 import { describe, it, expect } from "vitest";
 import { POOL_ORDER, DISTANCES, FIELD_SIZE, buildRace, crowdBets, odds, winProb } from "./systems/race";
 import { newHorse } from "./systems/stable";
-import { STATS, DISTANCE_STATS, MAX_LV } from "./systems/stable";
+import { RACES, rivalForm, RIVAL_END } from "./systems/scale";
+import { rng } from "./kits/rng";
+import { STATS, DISTANCE_STATS, MAX_LV, forge, canForge } from "./systems/stable";
 import {
   RACES_MIN, RACES_MAX, PURSE_SHARE, MIN_BET,
   recoveryPrize, canRecoverHere, featureRace,
@@ -37,11 +39,13 @@ describe("동결 — 규칙의 개수", () => {
     expect(PHASES).toHaveLength(6);
   });
 
-  it("경주 규모가 고정이다 — **12회 고정** · 6두 · 거리 6종", () => {
-    // 원래 8~12 랜덤이었다. 사용자가 실제 플레이(한 판 10분) 뒤 고정을 택했다.
-    expect(RACES_MIN).toBe(12);
-    expect(RACES_MAX).toBe(12);
+  it("경주 규모가 고정이다 — **20회 고정** · 6두 · 거리 6종", () => {
+    // 8~12 랜덤 → 12(HT-007) → **20(HT-009)**. 12경주 완주가 5분이라 목표의 절반이었다.
+    // 규모는 `scale.ts` 한 곳에서만 정한다.
+    expect(RACES_MIN).toBe(RACES);
+    expect(RACES_MAX).toBe(RACES);
     expect(RACES_MIN).toBe(RACES_MAX);
+    expect(RACES).toBe(20);
     expect(FIELD_SIZE).toBe(6);
     expect(DISTANCES).toHaveLength(6);
   });
@@ -110,5 +114,74 @@ describe("파산 — 끝이 아니다", () => {
   it("대상경주는 회복 폭이 더 크다 — 마지막에 몰려도 한 방이 있다", () => {
     const f = featureRace(3);
     expect(recoveryPrize(f.no, f)).toBeGreaterThan(recoveryPrize(f.no));
+  });
+});
+
+/**
+ * **규모가 바뀌어도 압박 곡선의 모양이 같은가.**
+ *
+ * 이 저장소가 규모 변경으로 두 번 무너졌다 — 스탯 3→5(HT-006), 경주 12→20(HT-009).
+ * 두 번 다 곡선을 **기울기**로 적어놔서, 규모가 바뀌면 다시 계산해야 하는데
+ * 아무도 안 했기 때문이다. 끝점으로 적으면 그 일이 안 생긴다.
+ */
+describe("압박 곡선은 규모에서 파생된다", () => {
+  it("첫 경주는 내 말 시작값과 같고 마지막 경주는 끝점이다", () => {
+    expect(rivalForm(1)).toBeCloseTo(3, 5);
+    expect(rivalForm(RACES)).toBeCloseTo(RIVAL_END, 5);
+  });
+
+  it("**경주 수를 바꿔도 마지막 상대가 같다** — 이것이 HT-009 가 고친 것의 전부다", () => {
+    for (const races of [8, 12, 20, 40]) {
+      expect(rivalForm(1, races)).toBeCloseTo(3, 5);
+      expect(rivalForm(races, races), `${races}경주`).toBeCloseTo(RIVAL_END, 5);
+    }
+  });
+
+  it("단조 증가한다 — 뒤로 갈수록 상대가 세진다", () => {
+    for (let no = 2; no <= RACES; no++) expect(rivalForm(no)).toBeGreaterThan(rivalForm(no - 1));
+  });
+
+  /** 내 말 천장이 10 이다. 끝점이 8 을 넘으면 강화로 따라갈 수 없게 된다. */
+  it("마지막 상대가 내 말 천장보다 충분히 아래다", () => {
+    expect(RIVAL_END).toBeLessThan(8);
+  });
+});
+
+/**
+ * **특화 압력이 규모가 커져도 남아 있는가.**
+ *
+ * HT-006 이 세운 것 — 강화 예산이 스탯 5종을 다 채우기엔 모자라야 배분이 판단이 된다.
+ * 경주가 12 → 20 이 되며 강화 기회가 8 → 14 회로 늘었으므로 **다시 확인한다**(HT-009).
+ * 예산이 넉넉해지면 "다 올리면 그만"이 되고 그건 판단이 아니라 정답이다.
+ */
+describe("특화 압력 — 다 올릴 수는 없다", () => {
+  /** 참조 플레이어처럼 가장 낮은 스탯부터 올린다. 가장 균등하게 퍼뜨리는 방식이다. */
+  function afterForges(seed: number, times: number) {
+    const rnd = rng(seed * 99991);
+    const h = newHorse("t");
+    for (let i = 0; i < times; i++) {
+      const k = [...STATS].filter((x) => canForge(h.stats[x]))
+        .sort((a, b) => h.stats[a] - h.stats[b])[0];
+      if (k) forge(h, k, rnd);
+    }
+    return STATS.map((k) => h.stats[k]);
+  }
+
+  // 실측 중앙이 14회다. 여유를 두고 그보다 많이 줘도 못 채워야 한다.
+  const runs = Array.from({ length: 400 }, (_, i) => afterForges(i + 1, 16));
+
+  it("**5종을 다 만렙으로 올릴 수 없다** — 예산이 모자라야 배분이 판단이 된다", () => {
+    expect(runs.filter((v) => v.every((x) => x === MAX_LV)).length).toBe(0);
+  });
+
+  it("5종을 전부 높게 가져갈 수도 없다", () => {
+    const allHigh = runs.filter((v) => v.every((x) => x >= 7)).length / runs.length;
+    expect(allHigh).toBeLessThan(0.05);
+  });
+
+  /** 총합이 절반을 넘으면 "다 올리면 그만"에 가까워진다. */
+  it("한 판에 올릴 수 있는 총량이 천장의 절반 아래다", () => {
+    const total = runs.map((v) => v.reduce((a, b) => a + b, 0)).sort((a, b) => a - b);
+    expect(total[Math.floor(total.length / 2)]).toBeLessThan(MAX_LV * STATS.length * 0.6);
   });
 });

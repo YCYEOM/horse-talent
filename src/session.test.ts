@@ -13,6 +13,7 @@ import {
   START_GOLD, type Tally,
 } from "./systems/session";
 import { DISTANCES } from "./systems/race";
+import { RACES } from "./systems/scale";
 import { newHorse } from "./systems/stable";
 import { playSession } from "./systems/policy";
 
@@ -21,20 +22,20 @@ const N = 300;
 const runs = Array.from({ length: N }, (_, i) => playSession(i + 1));
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 
-describe("경주 수 — 12회 고정", () => {
+describe("경주 수 — 고정", () => {
   /**
    * 원래 8~12 랜덤이었고 이유가 있었다 — 언제 끝날지 모르면
    * "마지막 경주에 전 재산" 이 안 통한다.
    * **사용자가 실제 플레이(한 판 10분) 뒤 고정을 택했다.**
    * 몰빵 제동은 이제 패리뮤추얼(크게 걸면 내 배당이 내려간다)만 남는다.
    */
-  it("모든 판이 12회다", () => {
-    for (const r of runs) expect(r.races).toBe(12);
+  it("모든 판이 같은 수다 — `scale.ts` 가 정한다", () => {
+    for (const r of runs) expect(r.races).toBe(RACES);
     expect(new Set(runs.map((r) => r.races)).size).toBe(1);
   });
 
   it("화면이 몇 번째인지와 전체를 함께 보여준다", () => {
-    expect(progressLabel(5)).toContain("12");
+    expect(progressLabel(5)).toContain(String(RACES));
     expect(progressLabel(5)).toContain("5");
   });
 });

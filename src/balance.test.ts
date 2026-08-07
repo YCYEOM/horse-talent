@@ -10,19 +10,31 @@
 import { describe, it, expect } from "vitest";
 import {
   buildRace, runRace, crowdBets, settle, truePower, POOLS, POOL_ORDER,
-  RIVAL_GROWTH, type Pool,
+  type Pool,
 } from "./systems/race";
 import { newHorse, STATS, type Horse, type StatKey } from "./systems/stable";
+import { rivalForm, RACES } from "./systems/scale";
 
 const flat = (lv: number): Horse => ({ name: "내말", stats: { speed: lv, accel: lv, stamina: lv, grit: 3, poise: 3 } });
 /**
  * 그 라운드의 상대 평균 = 관중이 내 말을 그 정도로 본다는 뜻.
- * **상수를 복사하지 않고 엔진에서 가져온다** — 0.45 를 손으로 적어뒀다가
- * `RIVAL_GROWTH` 가 0.32 로 바뀐 뒤에도 안 따라와서, 관중이 내 말을 과대평가하는
- * 상태가 되어 **"인기마 단승 +8%"** 라는 가짜 결과가 나왔다.
- * 이 저장소가 손으로 고른 상수로 데는 네 번째다.
+ * **공식을 복사하지 않고 엔진에서 가져온다** — 0.45 를 손으로 적어뒀다가
+ * 엔진이 0.32 로 바뀐 뒤에도 안 따라와서 **"인기마 단승 +8%"** 라는 가짜 결과가 나왔다.
+ * HT-009 에서 곡선이 기울기에서 끝점 파생으로 바뀌었는데, `rivalForm` 을 부르므로 따라왔다.
  */
-const formOf = (no: number) => 3 + (no - 1) * RIVAL_GROWTH;
+const formOf = (no: number) => rivalForm(no);
+
+/**
+ * 상대 평균이 `lv` 쯤 되는 경주 번호. **"평판과 실력이 같은 순간"을 찾는 도구다.**
+ *
+ * 예전에는 `5경주 · 5단계` 를 손으로 적어뒀는데, 12경주에서는 그 지점의 상대가 4.28 이라
+ * 우위가 거의 없었지만 20경주에서는 3.74 로 내려가 **우위가 생겨버렸다**(HT-009).
+ * 경주 번호가 아니라 **뜻**을 적는다.
+ */
+function raceWhereRivalsAre(lv: number): number {
+  for (let no = 1; no <= RACES; no++) if (rivalForm(no) >= lv) return no;
+  return RACES;
+}
 
 /** 능력치 순위별 승률. 인덱스 0 이 인기마다. */
 function winRateByRank(no: number, n = 800): number[] {
@@ -126,8 +138,10 @@ describe("경제 — 숨긴 정보로는 번다", () => {
     expect(roi).toBeLessThan(1.15);
   });
 
+  /** 내 말이 상대 평균과 같은 수준이면 관중의 평판이 맞는 것이고, 그러면 우위가 없다. */
   it("강화를 안 하면 정보 우위도 없다", () => {
-    expect(myRoi("place", 5, 5, formOf(5))).toBeLessThan(1.05);
+    const lv = 5, no = raceWhereRivalsAre(lv);
+    expect(myRoi("place", no, lv, formOf(no))).toBeLessThan(1.05);
   });
 });
 
