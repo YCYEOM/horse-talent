@@ -24,6 +24,7 @@ import {
 import { C, F, MINE_COAT, RIVAL_COATS, font, mono, withAlpha, card, accentGrad } from "../ui/tokens";
 import { drawHorse, HORSE_BOX, type Mood } from "../ui/horse";
 import { rng } from "../kits/rng";
+import { loadRuns, saveRun, ranked, rankOf, isBest, SHOWN, type Run } from "../systems/records";
 
 export const W = 960;
 export const H = 640;
@@ -94,6 +95,25 @@ export const L = {
   stableHorseX: 168,
   stableHorseY: 452,
   stableHorseS: 1.7,
+  /**
+   * 결산 — **두 단이다.** 왼쪽에 말과 요약, 오른쪽에 순위.
+   * 한 단에 다 넣었더니 요약 줄이 순위 카드를 뚫었다(HT-012).
+   */
+  recapColTop: 292,
+  recapHorseX: 120,
+  recapHorseY: 470,
+  recapHorseS: 1.4,
+  recapRowX: 240,          // 항목 이름
+  recapRowValX: 300,       // 값
+  recapRow0: 320,
+  recapRowPitch: 34,
+  /** 결산 — 지난 판 순위. 오른쪽 단 */
+  rankX: 560,
+  rankTop: 292,
+  rankW: 360,
+  rankH: 250,
+  rankRow0: 56,
+  rankPitch: 34,
   /** 아래 안내 */
   hint: 620,
 } as const;
@@ -131,6 +151,10 @@ export function revealLevel(actual: number, from: number, t: number): number {
 
 export class Game {
   phase: Phase = "name";
+  /** 결산에서 보여줄 기록. 판이 끝날 때 채워진다. */
+  private runs: Run[] = [];
+  private runBefore: Run[] = [];
+  private run: Run | null = null;
   horse: Horse;
   gold = START_GOLD;
   raceNo = 1;
@@ -234,10 +258,29 @@ export class Game {
   }
 
   private next() {
-    if (this.raceNo >= this.races) { this.tally.gold = this.gold; this.phase = "recap"; return; }
+    if (this.raceNo >= this.races) {
+      this.tally.gold = this.gold;
+      this.finishSession();
+      this.phase = "recap";
+      return;
+    }
     this.raceNo++;
     this.openRace();
     this.phase = "stable";
+  }
+
+  /**
+   * 판이 끝났다 — 기록을 남긴다. **저장 실패는 삼킨다**(사생활 모드 등),
+   * 그래도 이번 판은 목록에 들어가서 화면에 순위가 보인다.
+   * `now` 는 검사에서 시각을 고정하려고 받는다.
+   */
+  private finishSession(now = Date.now()) {
+    this.runBefore = loadRuns();
+    this.run = {
+      name: this.horse.name, gold: this.gold, races: this.races,
+      bestOdds: this.tally.best?.odds ?? 0, at: now,
+    };
+    this.runs = saveRun(this.run);
   }
 
   // ── 입력 ────────────────────────────────────────────────────────────────
@@ -903,28 +946,79 @@ export class Game {
       ctx.fillText(`+${t.best.gold.toLocaleString()} G`, W / 2 + 238, 248);
     }
 
-    drawHorse(ctx, W / 2 - 210, 400, 1.5, MINE_COAT,
+    drawHorse(ctx, L.recapHorseX, L.recapHorseY, L.recapHorseS, MINE_COAT,
       { mood: this.gold >= START_GOLD ? "happy" : "sad", num: 1 });
 
-    // 요약 — 12경주면 로그를 다 못 보여준다
+    // 요약 — 20경주면 로그를 다 못 보여준다.
+    // **능력치는 줄여 적는다** — 이름을 다 쓰면 오른쪽 순위 카드를 뚫는다.
     const rows: [string, string][] = [
-      ["내 말", `${this.horse.name}  ·  ${STATS.map((k) => `${STAT_NAME[k]} ${this.horse.stats[k]}`).join(" / ")}`],
+      ["내 말", this.horse.name],
+      ["능력치", STATS.map((k) => `${STAT_NAME[k][0]}${this.horse.stats[k]}`).join(" ")],
       ["강화", forgeSummary(t)],
       ["베팅", `${t.bets.placed}회 중 ${t.bets.hit}회 적중`],
-      ["수입", `상금 ${t.prize.toLocaleString()} G  ·  베팅 ${(this.gold - START_GOLD - t.prize + this.spent).toLocaleString()} G`],
+      ["수입", `상금 ${t.prize.toLocaleString()} · 베팅 ${(this.gold - START_GOLD - t.prize + this.spent).toLocaleString()}`],
       ["파산", t.brokeAt ? `${t.brokeAt}R 에 말랐다` : "끝까지 버텼다"],
     ];
     rows.forEach(([k, v], i) => {
-      const y = 320 + i * 34;
+      const y = L.recapRow0 + i * L.recapRowPitch;
       ctx.textAlign = "left"; ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
-      ctx.fillText(k, W / 2 - 100, y);
+      ctx.fillText(k, L.recapRowX, y);
       ctx.font = font(F.sm, 600);
       ctx.fillStyle = k === "파산" && t.brokeAt ? C.drop : C.textMuted;
-      ctx.fillText(v, W / 2 - 40, y);
+      ctx.fillText(v, L.recapRowValX, y);
     });
 
-    ctx.textAlign = "center"; ctx.font = font(F.sm, 500); ctx.fillStyle = C.textFaint;
-    ctx.fillText("M2 — 한 판이 끝까지 갔다", W / 2, L.hint);
+    this.drawRanking(ctx);
+    this.hint(ctx, "클릭 / Space 로 새 판 · 기록은 이 브라우저에만 남는다");
+  }
+
+  /**
+   * 지난 판 순위. **이 브라우저에만 남는다** — 정적 사이트라 서버가 없다.
+   * 첫 판이면 "첫 기록"이라고 말한다. 빈 표를 보여주면 고장으로 읽힌다.
+   */
+  private drawRanking(ctx: CanvasRenderingContext2D) {
+    const x = L.rankX, top = L.rankTop;
+    card(ctx, x, top, L.rankW, L.rankH, { r: 16, fill: 0.07, border: 0.16 });
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
+    ctx.fillText("기록", x + 16, top + 24);
+
+    const mine = this.run;
+    const list = ranked(this.runs).slice(0, SHOWN);
+    if (mine && isBest(this.runBefore, mine)) {
+      ctx.textAlign = "right"; ctx.font = font(F.xs, 800); ctx.fillStyle = C.gold;
+      ctx.fillText("최고 기록", x + L.rankW - 16, top + 24);
+    } else if (mine && !this.runBefore.length) {
+      ctx.textAlign = "right"; ctx.font = font(F.xs, 700); ctx.fillStyle = C.textFaint;
+      ctx.fillText("첫 기록", x + L.rankW - 16, top + 24);
+    }
+
+    list.forEach((r, i) => {
+      const y = top + L.rankRow0 + i * L.rankPitch;
+      // **이번 판을 표시한다.** 안 그러면 자기가 몇 등인지 표에서 찾아야 한다
+      const isMine = !!mine && r.at === mine.at;
+      if (isMine) {
+        ctx.fillStyle = withAlpha(C.gold, 0.16);
+        ctx.beginPath(); ctx.roundRect(x + 8, y - 15, L.rankW - 16, L.rankPitch - 4, 8); ctx.fill();
+      }
+      ctx.textAlign = "left"; ctx.font = mono(F.sm, 800);
+      ctx.fillStyle = i === 0 ? C.gold : C.textFaint;
+      ctx.fillText(`${i + 1}`, x + 18, y);
+      ctx.font = font(F.sm, isMine ? 800 : 600);
+      ctx.fillStyle = isMine ? C.text : C.textMuted;
+      ctx.fillText(r.name, x + 40, y);
+      ctx.textAlign = "right"; ctx.font = mono(F.sm, 800);
+      ctx.fillStyle = isMine ? C.gold : C.textMuted;
+      ctx.fillText(`${r.gold.toLocaleString()} G`, x + L.rankW - 18, y);
+    });
+
+    // 이번 판이 상위 밖이면 등수만 따로 알린다 — 표에 없으면 "기록 안 됐나" 싶다
+    const rank = mine ? rankOf(this.runs, mine) : 0;
+    ctx.textAlign = "center"; ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
+    const foot = !mine ? ""
+      : rank > SHOWN ? `이번 판 ${rank}등 / ${this.runs.length}판`
+      : `${this.runs.length}판 중`;
+    if (foot) ctx.fillText(foot, x + L.rankW / 2, top + L.rankH - 14);
   }
 }
 

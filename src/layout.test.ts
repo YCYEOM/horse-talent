@@ -13,6 +13,7 @@ import { FIELD_SIZE, POOL_ORDER, POOLS } from "./systems/race";
 import { STATS } from "./systems/stable";
 import { textBand, checkStack, textWidth } from "./kits/layout";
 import { HORSE_BOX } from "./ui/horse";
+import { SHOWN } from "./systems/records";
 import { F } from "./ui/tokens";
 
 describe("캔버스", () => {
@@ -275,5 +276,44 @@ describe("말 그림이 제자리에 든다", () => {
       }
     }
     expect(textBand(L.hint, F.sm).top, "잔디가 안내줄에 붙는다").toBeGreaterThan(turfBottom + 6);
+  });
+});
+
+/**
+ * 결산은 **두 단**이다 — 왼쪽에 말과 요약, 오른쪽에 순위.
+ * 한 단에 다 넣었더니 요약 줄이 순위 카드를 뚫었다(HT-012).
+ * 이번에도 **사람이 화면에서 먼저 봤다** — 검사가 결산을 아예 안 보고 있었다.
+ */
+describe("결산 — 요약과 순위가 안 겹친다", () => {
+  const box = (x: number, y: number, s: number) => ({
+    left: x + HORSE_BOX.left * s, right: x + HORSE_BOX.right * s,
+    top: y + HORSE_BOX.top * s, bottom: y + HORSE_BOX.bottom * s,
+  });
+
+  it("왼쪽 단(말·요약)이 순위 카드를 안 넘는다", () => {
+    const h = box(L.recapHorseX, L.recapHorseY, L.recapHorseS);
+    expect(h.left, "말이 화면 왼쪽 밖").toBeGreaterThanOrEqual(0);
+    expect(h.right, "말이 요약 줄을 덮는다").toBeLessThan(L.recapRowX);
+    // 값이 가장 긴 줄이 순위 카드에 안 닿는다
+    const longest = "상금 99,999 · 베팅 -9,999";
+    expect(L.recapRowValX + textWidth(longest, F.sm), "요약 값이 순위 카드를 뚫는다")
+      .toBeLessThan(L.rankX - 12);
+  });
+
+  it("순위 카드가 화면 안에 있고 안내줄을 안 침범한다", () => {
+    expect(L.rankX + L.rankW).toBeLessThanOrEqual(W - 20);
+    expect(L.rankTop + L.rankH).toBeLessThan(textBand(L.hint, F.sm).top);
+  });
+
+  it("순위 5줄과 아래 요약이 카드 안에 든다", () => {
+    const last = L.rankTop + L.rankRow0 + (SHOWN - 1) * L.rankPitch;
+    expect(last).toBeLessThan(L.rankTop + L.rankH - 28);   // 바닥 "N판 중" 자리
+  });
+
+  it("말과 요약 줄이 세로로 안 겹치고 안내줄 위에 선다", () => {
+    const rowsBottom = L.recapRow0 + 5 * L.recapRowPitch;
+    expect(rowsBottom).toBeLessThan(textBand(L.hint, F.sm).top);
+    expect(box(L.recapHorseX, L.recapHorseY, L.recapHorseS).bottom)
+      .toBeLessThan(textBand(L.hint, F.sm).top);
   });
 });

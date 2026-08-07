@@ -29,11 +29,17 @@ if (import.meta.env.DEV) {
     stable: ["Enter"],
     window: ["Enter", " "],
     track: ["Enter", " ", [856, 575]],          // 안 걸고
-    settle: ["Enter", " ", [856, 575], " "],    // 경주 건너뛰기
+    settle: ["Enter", " ", [860, 579], " "],    // 경주 건너뛰기
+    // 판 끝까지 — 경주마다 [창구로 · 안 걸고 · 경주 스킵 · **한 틱** · 정산 넘김].
+    // `tick` 이 필요한 이유: 트랙 종료 판정이 `update` 안에 있어서
+    // 입력만 밀어넣으면 `raceT` 만 올라가고 페이즈가 안 넘어간다.
+    recap: ["Enter", ...Array.from({ length: 24 }, () =>
+      [" ", [860, 579] as [number, number], " ", "tick", " "]).flat()],
   };
   for (const step of steps[go ?? ""] ?? []) {
     // 이름 화면의 Enter 는 `key` 가 아니라 `submitName` 이다 — IME 때문에 갈렸다
-    if (step === "Enter" && game.phase === "name") game.submitName();
+    if (step === "tick") game.update(0.1);
+    else if (step === "Enter" && game.phase === "name") game.submitName();
     else if (typeof step === "string") game.key(step);
     // 클릭은 **그려진 뒤에만** 먹는다 — 히트 영역이 draw 에서 쌓인다
     else { game.draw(ctx); game.click(...step); }

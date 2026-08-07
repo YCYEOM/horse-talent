@@ -21,6 +21,8 @@ const SHOTS = [
   { name: "4-track", q: `?seed=${SEED}&go=track&t=3.0` },
   { name: "5-track-finish", q: `?seed=${SEED}&go=track&t=6.5` },
   { name: "6-settle", q: `?seed=${SEED}&go=settle&t=0` },
+  // 결산은 지금까지 안 찍었다 — 그래서 순위 카드가 요약을 덮는 것을 사람이 먼저 봤다
+  { name: "7-recap", q: `?seed=${SEED}&go=recap` },
 ];
 
 mkdirSync(OUT, { recursive: true });

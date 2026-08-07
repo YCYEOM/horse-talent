@@ -38,7 +38,7 @@ where:
 
   EVD-BUILD: "evidence/REPORT.md — 커밋·빌드 해시·단계별 통과. `npm run evidence` 가 만든다"
   EVD-MEASURE: "evidence/measurements.md — 문서 수치를 지금 코드로 다시 낸 것. 어긋나면 ⚠"
-  EVD-SCREENS: "evidence/screens/ — 페이즈 6장. 크롬이 없으면 NOT-CAPTURED.md"
+  EVD-SCREENS: "evidence/screens/ — 페이즈 7장(결산 포함). 크롬이 없으면 NOT-CAPTURED.md"
 
 links:
   - { from: THEME-001, to: CON-001 }

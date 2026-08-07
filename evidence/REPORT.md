@@ -4,29 +4,31 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 41.7s |
-| ✓ | 빌드 | `npm run build` | 1.5s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.4s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 58.7s |
-| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.1s |
-| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 18.9s |
+| ✓ | 검사 | `npm test` | 35.4s |
+| ✓ | 빌드 | `npm run build` | 1.3s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.2s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 54.9s |
+| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
+| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.0s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 19.3s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `ddca11e` |
+| 커밋 | `5a93638` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 5건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 7건**
 
 ```
-M evidence/measurements.md
+M nan/trace.yaml
+ M scripts/shots.mjs
  M src/layout.test.ts
- M src/race.test.ts
+ M src/main.ts
  M src/scenes/game.ts
- M src/systems/race.ts
+?? src/records.test.ts
+?? src/systems/records.ts
 ``` |
 | node | v24.18.0 |
 
@@ -34,7 +36,7 @@ M evidence/measurements.md
 
 | 파일 | SHA-256 (앞 16) | 크기 |
 |---|---|---|
-| `index-C6rg6FYy.js` | `ae116f2099ca5082` | 38.3 kB |
+| `index-BzDdWWJd.js` | `9c9bd2350fdba653` | 40.8 kB |
 
 ## 같이 있는 것
 
@@ -47,29 +49,29 @@ M evidence/measurements.md
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 35400ms
+ ✓ src/balance.test.ts  (18 tests) 30295ms
 
- Test Files  8 passed (8)
-      Tests  166 passed (166)
-   Start at  14:29:13
-   Duration  41.15s (transform 451ms, setup 0ms, collect 19.67s, tests 69.46s, environment 1ms, prepare 853ms)
+ Test Files  9 passed (9)
+      Tests  179 passed (179)
+   Start at  14:41:34
+   Duration  34.93s (transform 584ms, setup 0ms, collect 15.39s, tests 58.53s, environment 1ms, prepare 922ms)
 ```
 
 ### 빌드
 
 ```
-✓ 12 modules transformed.
+✓ 13 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
-dist/assets/index-C6rg6FYy.js  37.59 kB │ gzip: 14.56 kB
-✓ built in 165ms
+dist/assets/index-BzDdWWJd.js  40.15 kB │ gzip: 15.48 kB
+✓ built in 148ms
 ```
 
 ### 빌드 격리
 
 ```
-[isolated] tsc 가 읽은 253개 파일 전부 프로젝트 안에 있다
+[isolated] tsc 가 읽은 255개 파일 전부 프로젝트 안에 있다
 ```
 
 ### 실측
@@ -98,10 +100,10 @@ dist/assets/index-C6rg6FYy.js  37.59 kB │ gzip: 14.56 kB
 ### 화면
 
 ```
-[shots] 1-name.png
 [shots] 2-stable.png
 [shots] 3-window.png
 [shots] 4-track.png
 [shots] 5-track-finish.png
 [shots] 6-settle.png
+[shots] 7-recap.png
 ```
