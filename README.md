@@ -32,6 +32,12 @@ npm run evidence     # 검사·빌드·격리·실측·라이선스·AI기록·�
 | `npm test` | 검사 148개 |
 | `npm run evidence` | 위 전부 + 증거 산출 |
 
+## 전역 순위
+
+판이 끝나면 순위가 [Cloudflare Workers + D1](worker/) 에 쌓이고 모두가 함께 본다.
+서버에 못 닿으면 `localStorage` 의 내 기록으로 떨어진다.
+**점수는 위조된다** — 이유와 한계는 `worker/README.md`.
+
 ## 규칙이 어디 있는가
 
 | 무엇 | 어디 |

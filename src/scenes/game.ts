@@ -24,7 +24,10 @@ import {
 import { C, F, MINE_COAT, RIVAL_COATS, font, mono, withAlpha, card, accentGrad } from "../ui/tokens";
 import { drawHorse, HORSE_BOX, type Mood } from "../ui/horse";
 import { rng } from "../kits/rng";
-import { loadRuns, saveRun, ranked, rankOf, isBest, SHOWN, type Run } from "../systems/records";
+import {
+  loadRuns, saveRun, submitRun, ranked, rankOf, isBest, SHOWN,
+  type Run, type Board,
+} from "../systems/records";
 
 export const W = 960;
 export const H = 640;
@@ -155,6 +158,12 @@ export class Game {
   private runs: Run[] = [];
   private runBefore: Run[] = [];
   private run: Run | null = null;
+  /**
+   * 전역 순위 상태. **`sending` 을 따로 두는 이유** — 못 받은 것과 아직 안 온 것은
+   * 다른 말이다. 둘을 뭉치면 로딩 중에 "기록 없음"이라고 거짓말한다.
+   */
+  private board: Board | null = null;
+  private sending = false;
   horse: Horse;
   gold = START_GOLD;
   raceNo = 1;
@@ -280,7 +289,14 @@ export class Game {
       name: this.horse.name, gold: this.gold, races: this.races,
       bestOdds: this.tally.best?.odds ?? 0, at: now,
     };
+    // 로컬에 **먼저** 남긴다 — 서버가 안 되어도 내 기록은 있어야 한다
     this.runs = saveRun(this.run);
+    // 전역은 뒤따라온다. 오면 화면이 바뀌고, 안 오면 로컬이 그대로 보인다.
+    this.board = null;
+    this.sending = true;
+    submitRun(this.run)
+      .then((b) => { this.board = b; })
+      .finally(() => { this.sending = false; });
   }
 
   // ── 입력 ────────────────────────────────────────────────────────────────
@@ -969,34 +985,45 @@ export class Game {
     });
 
     this.drawRanking(ctx);
-    this.hint(ctx, "클릭 / Space 로 새 판 · 기록은 이 브라우저에만 남는다");
+    this.hint(ctx, this.board
+      ? "클릭 / Space 로 새 판 · 순위는 모두가 함께 본다"
+      : "클릭 / Space 로 새 판 · 서버에 못 닿아 이 브라우저 기록만 보인다");
   }
 
   /**
-   * 지난 판 순위. **이 브라우저에만 남는다** — 정적 사이트라 서버가 없다.
-   * 첫 판이면 "첫 기록"이라고 말한다. 빈 표를 보여주면 고장으로 읽힌다.
+   * 순위. **전역이 오면 전역, 안 오면 로컬.**
+   * 셋을 구별해서 말한다 — 보내는 중 / 전역 / 이 브라우저.
+   * 뭉치면 로딩 중에 "기록 없음"이라고 거짓말하게 된다.
    */
   private drawRanking(ctx: CanvasRenderingContext2D) {
     const x = L.rankX, top = L.rankTop;
     card(ctx, x, top, L.rankW, L.rankH, { r: 16, fill: 0.07, border: 0.16 });
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
     ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
-    ctx.fillText("기록", x + 16, top + 24);
+
+    const global = !!this.board;
+    ctx.fillText(this.sending ? "기록 올리는 중" : global ? "전체 순위" : "내 기록", x + 16, top + 24);
 
     const mine = this.run;
-    const list = ranked(this.runs).slice(0, SHOWN);
-    if (mine && isBest(this.runBefore, mine)) {
-      ctx.textAlign = "right"; ctx.font = font(F.xs, 800); ctx.fillStyle = C.gold;
+    const list = global ? this.board!.runs.slice(0, SHOWN) : ranked(this.runs).slice(0, SHOWN);
+    // 오른쪽 꼬리표 — 최고 기록 갱신이 첫 판보다 먼저다
+    ctx.textAlign = "right";
+    if (mine && global && this.board!.rank === 1) {
+      ctx.font = font(F.xs, 800); ctx.fillStyle = C.gold;
+      ctx.fillText("전체 1위", x + L.rankW - 16, top + 24);
+    } else if (mine && !global && isBest(this.runBefore, mine)) {
+      ctx.font = font(F.xs, 800); ctx.fillStyle = C.gold;
       ctx.fillText("최고 기록", x + L.rankW - 16, top + 24);
-    } else if (mine && !this.runBefore.length) {
-      ctx.textAlign = "right"; ctx.font = font(F.xs, 700); ctx.fillStyle = C.textFaint;
+    } else if (mine && !global && !this.sending && !this.runBefore.length) {
+      ctx.font = font(F.xs, 700); ctx.fillStyle = C.textFaint;
       ctx.fillText("첫 기록", x + L.rankW - 16, top + 24);
     }
 
     list.forEach((r, i) => {
       const y = top + L.rankRow0 + i * L.rankPitch;
-      // **이번 판을 표시한다.** 안 그러면 자기가 몇 등인지 표에서 찾아야 한다
-      const isMine = !!mine && r.at === mine.at;
+      // **이번 판을 표시한다.** 안 그러면 자기가 몇 등인지 표에서 찾아야 한다.
+      // 전역은 서버가 정한 시각(`at`)을 돌려주므로 등수로 맞춘다.
+      const isMine = !!mine && (global ? i + 1 === this.board!.rank : r.at === mine.at);
       if (isMine) {
         ctx.fillStyle = withAlpha(C.gold, 0.16);
         ctx.beginPath(); ctx.roundRect(x + 8, y - 15, L.rankW - 16, L.rankPitch - 4, 8); ctx.fill();
@@ -1012,12 +1039,15 @@ export class Game {
       ctx.fillText(`${r.gold.toLocaleString()} G`, x + L.rankW - 18, y);
     });
 
-    // 이번 판이 상위 밖이면 등수만 따로 알린다 — 표에 없으면 "기록 안 됐나" 싶다
-    const rank = mine ? rankOf(this.runs, mine) : 0;
+    // 아래 한 줄 — 이번 판이 상위 밖이면 등수를, 아니면 모수를 알린다.
+    // 표에 자기가 없으면 "기록이 안 됐나" 싶어진다.
+    const rank = global ? this.board!.rank : (mine ? rankOf(this.runs, mine) : 0);
+    const total = global ? this.board!.total : this.runs.length;
     ctx.textAlign = "center"; ctx.font = mono(F.xs, 600); ctx.fillStyle = C.textFaint;
-    const foot = !mine ? ""
-      : rank > SHOWN ? `이번 판 ${rank}등 / ${this.runs.length}판`
-      : `${this.runs.length}판 중`;
+    const foot = this.sending ? "…"
+      : !mine ? ""
+      : rank > SHOWN ? `이번 판 ${rank}등 / ${total}판`
+      : `${total}판 중${global ? "" : " · 이 브라우저"}`;
     if (foot) ctx.fillText(foot, x + L.rankW / 2, top + L.rankH - 14);
   }
 }

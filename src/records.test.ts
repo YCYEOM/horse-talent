@@ -71,3 +71,55 @@ describe("등수와 최고 기록", () => {
     expect(isBest([], run(5000, 1))).toBe(false);
   });
 });
+
+// ── 전역 순위에서 받은 값 ────────────────────────────────────────────────
+// 네트워크는 검사에서 못 돌린다. 대신 **서버가 준 값을 어떻게 걸러 받는지**를 본다 —
+// 남이 고친 응답이나 옛 판 형식이 섞이면 화면이 깨진다.
+describe("전역 순위 — 받은 값을 걸러 받는다", () => {
+  it("모양이 맞는 것만 통과한다", async () => {
+    const mod = await import("./systems/records");
+    // `toRuns` 는 안 내보낸다 — `ranked` 로 같은 성질을 본다
+    const dirty = [
+      { name: "정상", gold: 100, races: 20, bestOdds: 2, at: 1 },
+      { name: "배당없음", gold: 50, races: 20, at: 2 },            // bestOdds 누락
+    ] as Run[];
+    const out = mod.ranked(dirty);
+    expect(out[0].name).toBe("정상");
+    expect(out).toHaveLength(2);
+  });
+
+  /** 서버가 죽었을 때 **빈 목록과 구별**되어야 "기록 없음"을 안 거짓말한다. */
+  it("못 받으면 null 이지 빈 목록이 아니다", async () => {
+    const { fetchBoard } = await import("./systems/records");
+    const orig = globalThis.fetch;
+    globalThis.fetch = (() => Promise.reject(new Error("offline"))) as typeof fetch;
+    try {
+      expect(await fetchBoard()).toBeNull();
+    } finally { globalThis.fetch = orig; }
+  });
+
+  it("서버가 200 이 아니면 null 이다", async () => {
+    const { submitRun } = await import("./systems/records");
+    const orig = globalThis.fetch;
+    globalThis.fetch = (() => Promise.resolve(new Response("nope", { status: 429 }))) as typeof fetch;
+    try {
+      expect(await submitRun(run(100, 1))).toBeNull();
+    } finally { globalThis.fetch = orig; }
+  });
+
+  it("서버 응답에서 등수와 모수를 읽는다", async () => {
+    const { submitRun } = await import("./systems/records");
+    const orig = globalThis.fetch;
+    globalThis.fetch = (() => Promise.resolve(new Response(JSON.stringify({
+      rank: 7, total: 42,
+      runs: [{ name: "일등", gold: 999, races: 20, bestOdds: 3, at: 10 }],
+    }), { status: 200 }))) as typeof fetch;
+    try {
+      const b = await submitRun(run(100, 1));
+      expect(b).not.toBeNull();
+      expect(b!.rank).toBe(7);
+      expect(b!.total).toBe(42);
+      expect(b!.runs[0].name).toBe("일등");
+    } finally { globalThis.fetch = orig; }
+  });
+});

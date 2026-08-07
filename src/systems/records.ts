@@ -3,11 +3,14 @@
 // M4 동결은 "새 시스템·승식·스탯·페이즈 금지"인데 이건 셋 다 아니다.
 // 경주·강화·배당 어디에도 안 닿고, 화면도 기존 결산(`recap`)에 얹는다.
 //
-// **브라우저 안에만 남는다.** 정적 사이트라 서버가 없다 —
-// 전역 순위표를 하려면 백엔드가 따로 있어야 하고, 그건 남의 기기로 데이터를 보내는
-// 일이라 사람이 결정할 문제다. 여기서는 아무것도 밖으로 안 나간다.
+// 저장이 **두 곳**이다 —
+//   · 전역: Cloudflare Workers + D1 (`worker/`). 여러 사람이 나눠 본다.
+//   · 로컬: `localStorage`. 서버가 안 되면 여기로 떨어진다.
 //
-// **순위 계산과 저장을 나눈 이유** — 저장은 브라우저에만 있고 검사에서 못 돌린다.
+// 전역이 기본이고 로컬은 **대비책**이다. 서버가 죽었다고 결산이 비면 고장으로 읽힌다.
+// 로컬은 항상 같이 쓴다 — 인터넷 없이 논 판도 남아야 한다.
+//
+// **순위 계산과 저장을 나눈 이유** — 저장은 브라우저·네트워크에 있어 검사에서 못 돌린다.
 // 규칙(무엇이 더 좋은 기록인가)은 순수 함수로 두어야 검사가 볼 수 있다.
 
 export interface Run {
@@ -94,3 +97,65 @@ export function saveRun(run: Run): Run[] {
 export function clearRuns(): void {
   try { store()?.removeItem(KEY); } catch { /* 무시 */ }
 }
+
+// ── 전역 순위 (Cloudflare Workers + D1) ─────────────────────────────────
+// 서버 코드는 `worker/worker.js`, 스키마는 `worker/schema.sql`.
+//
+// **점수는 근본적으로 위조된다** — 클라이언트만 있는 게임이라 누구든 이 주소로
+// 아무 값이나 보낼 수 있다. 서버가 값의 모양과 범위, 이름 길이, 속도를 보지만
+// 작정하면 뚫린다. 진짜로 막으려면 서버가 경주를 다시 돌려 대조해야 한다.
+
+const API = "https://horse-talent-rank.ycyeom.workers.dev/runs";
+/** 서버를 기다리는 한도. 넘으면 로컬만 보여준다 — 결산이 멈춰 있으면 안 된다. */
+const TIMEOUT_MS = 4000;
+
+export interface Board {
+  runs: Run[];
+  total: number;
+  /** 이번 판이 몇 등인가. 서버가 센다(상위 목록 밖이어도 안다). 0 이면 모른다. */
+  rank: number;
+}
+
+async function call(path: string, init?: RequestInit): Promise<unknown | null> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(path, { ...init, signal: ctl.signal });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;            // 오프라인·차단·시간 초과 — 부르는 쪽이 로컬로 간다
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** 서버가 준 목록을 우리 모양으로. 남이 고친 값이 섞일 수 있어 걸러 받는다. */
+function toRuns(v: unknown): Run[] {
+  if (!Array.isArray(v)) return [];
+  return v.filter((r): r is Run =>
+    !!r && typeof r.name === "string" && Number.isFinite(r.gold) &&
+    Number.isFinite(r.races) && Number.isFinite(r.at)
+  ).map((r) => ({ ...r, bestOdds: Number.isFinite(r.bestOdds) ? r.bestOdds : 0 }));
+}
+
+/** 전역 순위 상위 N. 못 받으면 `null` — 빈 목록과 구별해야 "기록 없음"을 안 거짓말한다. */
+export async function fetchBoard(limit = SHOWN): Promise<Board | null> {
+  const v = await call(`${API}?limit=${limit}`) as { runs?: unknown; total?: number } | null;
+  if (!v) return null;
+  return { runs: toRuns(v.runs), total: Number(v.total) || 0, rank: 0 };
+}
+
+/** 한 판을 전역에 올린다. 못 올리면 `null` 이고, 로컬 기록은 이미 남아 있다. */
+export async function submitRun(run: Run): Promise<Board | null> {
+  const v = await call(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: run.name, gold: run.gold, races: run.races, bestOdds: run.bestOdds,
+    }),
+  }) as { runs?: unknown; total?: number; rank?: number } | null;
+  if (!v) return null;
+  return { runs: toRuns(v.runs), total: Number(v.total) || 0, rank: Number(v.rank) || 0 };
+}
+

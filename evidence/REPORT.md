@@ -4,31 +4,30 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 35.4s |
-| ✓ | 빌드 | `npm run build` | 1.3s |
-| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.2s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 54.9s |
+| ✓ | 검사 | `npm test` | 44.6s |
+| ✓ | 빌드 | `npm run build` | 1.6s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.5s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 68.0s |
 | ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
 | ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.0s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 19.3s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 21.3s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `5a93638` |
+| 커밋 | `e49b4c7` |
 | 브랜치 | main |
-| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 7건**
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 6건**
 
 ```
-M nan/trace.yaml
- M scripts/shots.mjs
- M src/layout.test.ts
- M src/main.ts
+M docs/DECISIONS.md
+ M docs/GAME_SPEC.md
+ M src/records.test.ts
  M src/scenes/game.ts
-?? src/records.test.ts
-?? src/systems/records.ts
+ M src/systems/records.ts
+?? worker/
 ``` |
 | node | v24.18.0 |
 
@@ -36,7 +35,7 @@ M nan/trace.yaml
 
 | 파일 | SHA-256 (앞 16) | 크기 |
 |---|---|---|
-| `index-BzDdWWJd.js` | `9c9bd2350fdba653` | 40.8 kB |
+| `index-yxvXVscy.js` | `0b9b9842d0e2ce29` | 42.1 kB |
 
 ## 같이 있는 것
 
@@ -49,12 +48,12 @@ M nan/trace.yaml
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 30295ms
+ ✓ src/balance.test.ts  (18 tests) 37818ms
 
  Test Files  9 passed (9)
-      Tests  179 passed (179)
-   Start at  14:41:34
-   Duration  34.93s (transform 584ms, setup 0ms, collect 15.39s, tests 58.53s, environment 1ms, prepare 922ms)
+      Tests  183 passed (183)
+   Start at  15:05:16
+   Duration  43.97s (transform 648ms, setup 0ms, collect 21.20s, tests 74.15s, environment 1ms, prepare 904ms)
 ```
 
 ### 빌드
@@ -63,9 +62,9 @@ M nan/trace.yaml
 ✓ 13 modules transformed.
 rendering chunks...
 computing gzip size...
-dist/index.html                 0.66 kB │ gzip:  0.42 kB
-dist/assets/index-BzDdWWJd.js  40.15 kB │ gzip: 15.48 kB
-✓ built in 148ms
+dist/index.html                 0.66 kB │ gzip:  0.41 kB
+dist/assets/index-yxvXVscy.js  41.39 kB │ gzip: 16.02 kB
+✓ built in 185ms
 ```
 
 ### 빌드 격리
