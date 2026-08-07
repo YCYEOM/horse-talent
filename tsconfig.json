@@ -7,9 +7,17 @@
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "lib": ["ES2022", "DOM"],
-    "types": ["vite/client"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "types": [
+      "vite/client",
+      "node"
+    ],
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

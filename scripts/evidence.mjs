@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 const STEPS = [
   { id: "test", what: "검사", cmd: "npm test" },
   { id: "build", what: "빌드", cmd: "npm run build" },
+  { id: "isolated", what: "빌드 격리", cmd: "node scripts/isolated.mjs" },
   { id: "measure", what: "실측", cmd: "npx vite-node src/evidence/measure.ts" },
   { id: "licenses", what: "라이선스", cmd: "node scripts/licenses.mjs" },
   { id: "ai-log", what: "AI 사용 기록", cmd: "node scripts/ai-use-log.mjs" },

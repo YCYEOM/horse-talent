@@ -35,6 +35,7 @@ jobs:
       - run: npm ci
       - run: npm test          # 통과 못 하면 여기서 멈춘다
       - run: npm run build
+      - run: npm run isolated  # 프로젝트 밖 타입을 주워 쓰고 있지 않은가
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

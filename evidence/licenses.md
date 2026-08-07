@@ -17,6 +17,7 @@
 
 | 이름 | 버전 | 라이선스 |
 |---|---|---|
+| `@types/node` | ^24.13.3 | MIT |
 | `bass-platform` | file:tools/bass-platform-0.2.1.tgz | UNLICENSED |
 | `typescript` | ^5.4.0 | Apache-2.0 |
 | `vite` | ^5.2.0 | MIT |

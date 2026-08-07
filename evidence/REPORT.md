@@ -4,21 +4,31 @@
 
 | | 단계 | 명령 | 시간 |
 |---|---|---|---|
-| ✓ | 검사 | `npm test` | 45.7s |
-| ✓ | 빌드 | `npm run build` | 1.6s |
-| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 41.1s |
-| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.1s |
-| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.1s |
-| ✓ | 화면 | `node scripts/shots.mjs` | 17.8s |
+| ✓ | 검사 | `npm test` | 34.7s |
+| ✓ | 빌드 | `npm run build` | 1.3s |
+| ✓ | 빌드 격리 | `node scripts/isolated.mjs` | 1.2s |
+| ✓ | 실측 | `npx vite-node src/evidence/measure.ts` | 34.0s |
+| ✓ | 라이선스 | `node scripts/licenses.mjs` | 0.0s |
+| ✓ | AI 사용 기록 | `node scripts/ai-use-log.mjs` | 0.0s |
+| ✓ | 화면 | `node scripts/shots.mjs` | 16.9s |
 
 
 ## 어느 소스에서 나왔나
 
 | | |
 |---|---|
-| 커밋 | `7533eea` |
+| 커밋 | `d1fb17d` |
 | 브랜치 | main |
-| 소스 트리 | 깨끗하다 (`evidence/` 제외) |
+| 소스 트리 | **깨끗하지 않다 — 커밋 안 된 변경 6건**
+
+```
+M .github/workflows/pages.yml
+ M package-lock.json
+ M package.json
+ M scripts/evidence.mjs
+ M tsconfig.json
+?? scripts/isolated.mjs
+``` |
 | node | v24.18.0 |
 
 ## 빌드 산출물
@@ -38,12 +48,12 @@
 ### 검사
 
 ```
- ✓ src/balance.test.ts  (18 tests) 38780ms
+ ✓ src/balance.test.ts  (18 tests) 29584ms
 
  Test Files  7 passed (7)
       Tests  148 passed (148)
-   Start at  02:00:05
-   Duration  45.09s (transform 455ms, setup 1ms, collect 14.84s, tests 74.91s, environment 1ms, prepare 741ms)
+   Start at  08:08:43
+   Duration  34.10s (transform 422ms, setup 0ms, collect 11.01s, tests 57.12s, environment 1ms, prepare 667ms)
 ```
 
 ### 빌드
@@ -54,7 +64,13 @@ rendering chunks...
 computing gzip size...
 dist/index.html                 0.66 kB │ gzip:  0.42 kB
 dist/assets/index-BMgG1WvW.js  36.43 kB │ gzip: 14.04 kB
-✓ built in 165ms
+✓ built in 123ms
+```
+
+### 빌드 격리
+
+```
+[isolated] tsc 가 읽은 251개 파일 전부 프로젝트 안에 있다
 ```
 
 ### 실측
@@ -71,13 +87,13 @@ dist/assets/index-BMgG1WvW.js  36.43 kB │ gzip: 14.04 kB
 ### 라이선스
 
 ```
-[licenses] evidence/licenses.md · 런타임 0 · 개발 4
+[licenses] evidence/licenses.md · 런타임 0 · 개발 5
 ```
 
 ### AI 사용 기록
 
 ```
-[ai-use-log] docs/submission/ai-use-log.yaml · 7건
+[ai-use-log] docs/submission/ai-use-log.yaml · 8건
 ```
 
 ### 화면
